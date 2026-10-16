@@ -156,7 +156,7 @@ function setup(){
   <div class="modes">${MODES.map(([id,l,d])=>`<button class="mode ${cur==id?'on':''}" data-mode="${id}"><b>${l}</b><small>${d}</small></button>`).join('')}</div>
   <h2>Règles</h2>
   <div class="opts">
-  ${x?opt('dout',cfg.dout,'Finir sur un double','Le dernier lancer doit être un double ou le bull'):''}
+  ${x?opt('dout',cfg.dout,'Finir sur un double','Le dernier lancer doit être un double ou le bull'):opt('ct',!!cfg.ct,'Cut throat','Tes points vont aux adversaires, le plus bas gagne')}
   ${opt('bull',!cfg.bull50,'Double bull',cfg.bull50?'Tout le bull vaut 50':'25 pour l’anneau, 50 pour le centre')}
   ${opt('teams',cfg.teams,'Jouer en équipes','Les coéquipiers partagent le score')}
   ${opt('rnd',cfg.random,'Ordre aléatoire','L’ordre est tiré au sort au lancement')}
@@ -178,6 +178,7 @@ function setup(){
     if(d.mode){if(/^\d+$/.test(d.mode)){cfg.mode='x01';cfg.start=+d.mode}else cfg.mode=d.mode}
     else if(d.opt=='dout')cfg.dout=!cfg.dout
     else if(d.opt=='bull')cfg.bull50=!cfg.bull50
+    else if(d.opt=='ct')cfg.ct=!cfg.ct
     else if(d.opt=='teams')cfg.teams=!cfg.teams
     else if(d.opt=='rnd')cfg.random=!cfg.random
     else if(d.team){const p=P[+d.team];p.t=(p.t+1)%4}
@@ -206,7 +207,7 @@ function startGame(){
   if(cfg.mode=='wild')nums=shuffle([...Array(20)].map((_,i)=>i+1)).slice(0,6).sort((a,b)=>b-a);
   if(cfg.mode!='x01')nums.push(25);
   const ps={};P.forEach(p=>ps[p.n]={darts:0,total:0,best:0,t100:0,t140:0,t180:0,co:0,pts:0});
-  S={mode:cfg.mode,start:cfg.start,dout:cfg.dout,bull50:cfg.bull50,nums,cur:0,round:1,turn:[],wait:false,winner:null,ps,order:P.map(p=>p.n),
+  S={mode:cfg.mode,start:cfg.start,dout:cfg.dout,bull50:cfg.bull50,ct:!!cfg.ct&&cfg.mode!='x01',nums,cur:0,round:1,turn:[],wait:false,winner:null,ps,order:P.map(p=>p.n),
     sides:sides.map(s=>({...s,mi:0,score:cfg.start,pts:0,marks:{},darts:0,total:0,last:''}))};
   hist.length=0;mult=1;msg='';save();game();return true;
 }
@@ -284,7 +285,7 @@ function game(){
   const sum=S.turn.reduce((a,d)=>a+d.val,0),rem=S.wait=='bust'?s.score:s.score-sum;
   const co=!cr&&left>0&&!S.wait?checkout(rem,left,S.dout):'';
   const title=cr?(S.mode=='wild'?'Wildcard':'Cricket'):S.start;
-  const tags=[!cr&&S.dout?'Double out':'',S.bull50?'Bull unique':'',S.sides.some(x=>x.members.length>1)?'Équipes':''].filter(Boolean);
+  const tags=[!cr&&S.dout?'Double out':'',S.ct?'Cut throat : le plus bas gagne':'',S.bull50?'Bull unique':'',S.sides.some(x=>x.members.length>1)?'Équipes':''].filter(Boolean);
   const nums=cr?S.nums.filter(n=>n<25):[...Array(20)].map((_,i)=>i+1);
   const input=cfg.input=='clavier'
     ?`<div class="pad"><button class="k mod ${mult==2?'on':''}" data-m="2">Double</button><button class="k mod ${mult==3?'on':''}" data-m="3">Triple</button>${nums.map(n=>`<button class="k" data-k="${n}">${n}</button>`).join('')}<button class="k bull" data-k="25">25</button><button class="k bull2" data-k="50">Bull</button></div>`
@@ -328,10 +329,11 @@ function throwDart(v,m,x,y){
     if(v&&S.nums.includes(n)){
       const have=s.marks[n]||0,close=Math.min(mk,3-Math.min(have,3)),extra=mk-close;
       s.marks[n]=have+close;got=close;
-      if(extra>0&&S.sides.some(o=>o!==s&&(o.marks[n]||0)<3)){const g=extra*(n==25?25:n);s.pts+=g;p.pts+=g;got+=extra}
+      const open=S.sides.filter(o=>o!==s&&(o.marks[n]||0)<3);
+      if(extra>0&&open.length){const g=extra*(n==25?25:n);if(S.ct)open.forEach(o=>o.pts+=g);else s.pts+=g;p.pts+=g;got+=extra}
     }
     S.turn.push({val:got,x,y,l});s.darts++;s.total+=got;p.darts++;p.total+=got;
-    if(S.nums.every(k=>(s.marks[k]||0)>=3)&&S.sides.every(o=>o===s||s.pts>=o.pts)){
+    if(S.nums.every(k=>(s.marks[k]||0)>=3)&&S.sides.every(o=>o===s||(S.ct?s.pts<=o.pts:s.pts>=o.pts))){
       p.best=Math.max(p.best,S.turn.reduce((a,d)=>a+d.val,0));S.winner=S.cur;S.turn=[]}
     else if(S.turn.length==3)S.wait='ok';
   }
@@ -357,7 +359,7 @@ function undo(){if(hist.length){S=JSON.parse(hist.pop());msg='';mult=1;save();ga
 // ---------- Fin de partie ----------
 function statsTable(){
   const w=S.sides[S.winner].members,names=S.order,cr=S.mode!='x01';
-  const rows=cr?[['Marques par tour',p=>avg(p)],['Meilleur tour',p=>p.best+(p.best>1?' marques':' marque')],['Points marqués',p=>p.pts],['Fléchettes',p=>p.darts]]
+  const rows=cr?[['Marques par tour',p=>avg(p)],['Meilleur tour',p=>p.best+(p.best>1?' marques':' marque')],[S.ct?'Points infligés':'Points marqués',p=>p.pts],['Fléchettes',p=>p.darts]]
     :[['Moyenne (3 fl.)',p=>avg(p)],['Meilleure volée',p=>p.best],['100+',p=>p.t100],['140+',p=>p.t140],['180',p=>p.t180],['Plus gros finish',p=>p.co||'–'],['Fléchettes',p=>p.darts]];
   return `<div class="tbl stats"><table><thead><tr><th></th>${names.map(n=>`<th class="${w.includes(n)?'cur':''}">${esc(n)}</th>`).join('')}</tr></thead>
   <tbody>${rows.map(([l,f])=>`<tr><th>${l}</th>${names.map(n=>`<td class="${w.includes(n)?'w':''}">${f(S.ps[n])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
