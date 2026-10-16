@@ -87,7 +87,7 @@ function setup(){
   <div class="lbl">Jeu</div>
   <div class="row">${[['301','301'],['501','501'],['701','701'],['cricket','Cricket'],['wild','Cricket Wildcard']]
     .map(([id,l])=>`<button class="chip ${cur==id?'on':''}" data-mode="${id}">${l}</button>`).join('')}</div>
-  ${cfg.mode=='wild'?'<div class="hint">6 numéros tirés au hasard à chaque partie, plus le bull.</div>':''}
+  ${cfg.mode=='wild'?'<div class="hint">6 numéros tirés au hasard, plus le bull. À la fin de chaque tour, les numéros que personne n’a touchés sont remplacés.</div>':''}
   <div class="lbl">Options</div>
   <div class="row">${x?`<button class="chip ${cfg.dout?'on':''}" id="dout">Finir sur un double</button>`:''}
   <button class="chip ${cfg.bull50?'':'on'}" id="bull">Double bull</button>
@@ -255,8 +255,16 @@ function confirmTurn(){
   hist.push(JSON.stringify(S));const s=S.sides[S.cur],tot=S.turn.reduce((a,d)=>a+d.val,0);
   if(S.mode=='x01'){s.darts+=S.turn.length;if(S.wait=='bust')s.last='Bust';else{s.total+=tot;s.score-=tot;s.last=tot}}
   else s.last=tot;
-  s.mi++;S.wait=false;msg='';S.turn=[];S.cur=(S.cur+1)%S.sides.length;if(S.cur==0)S.round++;
+  s.mi++;S.wait=false;msg='';S.turn=[];S.cur=(S.cur+1)%S.sides.length;if(S.cur==0){S.round++;if(S.mode=='wild')reroll()}
   save();game();
+}
+// Wildcard : en fin de tour, les numéros que personne n'a marqués sont remplacés
+function reroll(){
+  const keep=S.nums.filter(n=>n==25||S.sides.some(s=>(s.marks[n]||0)>0)),k=keep.filter(n=>n<25);
+  const pool=shuffle([...Array(20)].map((_,i)=>i+1).filter(n=>!S.nums.includes(n)));
+  const fresh=pool.slice(0,6-k.length);if(!fresh.length)return;
+  S.nums=[...k,...fresh].sort((a,b)=>b-a);S.nums.push(25);
+  msg='Nouveaux numéros : '+fresh.sort((a,b)=>b-a).join(', ');
 }
 function undo(){if(hist.length){S=JSON.parse(hist.pop());msg='';mult=1;save();game()}}
 
