@@ -32,3 +32,10 @@ jobs:
           name: Fléchettes (dernière version)
           files: Flechettes.apk
           make_latest: true
+      - name: Mettre l'APK sur le site
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -f Flechettes.apk
+          git commit -m "APK à jour [skip ci]" || exit 0
+          git pull --rebase origin main && git push
