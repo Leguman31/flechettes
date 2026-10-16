@@ -38,7 +38,8 @@ input{font:inherit;background:var(--panel);color:var(--fg);border:1px solid var(
 .p .m{font-size:.8rem;color:var(--mut);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .turn{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .dart{background:var(--panel);border:1px solid var(--line);border-radius:6px;min-width:64px;padding:6px 10px;text-align:center;font-family:var(--disp);font-size:1.4rem;font-weight:700}
-.co{color:var(--cream);font-family:var(--disp);font-size:1.3rem;letter-spacing:.04em}
+.co{color:var(--cream);font-family:var(--disp);font-size:1.3rem;letter-spacing:.04em;flex-basis:100%;background:rgba(47,154,85,.18);border:1px solid var(--green);border-radius:6px;padding:6px 10px}
+.co b{font-size:1.6rem;font-weight:800;margin-left:4px}
 .msg{color:var(--red);font-weight:600;min-height:1.2em}
 .crt{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
 .crt table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
@@ -139,14 +140,20 @@ function startGame(){
 }
 
 // ---------- Suggestions de finish (double out) ----------
-function checkout(r,darts){
-  if(r>170||r<2)return'';
-  const o=[];for(let i=1;i<=20;i++)o.push(['S'+i,i],['D'+i,2*i],['T'+i,3*i]);o.push(['25',25],['Bull',50]);
-  const dbl=o.filter(x=>x[0][0]=='D'||x[0]=='Bull');
-  for(const d of dbl)if(d[1]==r)return d[0];
-  if(darts>1)for(const a of o)for(const d of dbl)if(a[1]+d[1]==r)return a[0]+' '+d[0];
-  if(darts>2)for(const a of o.filter(x=>x[0][0]=='T'||x[0]=='Bull').concat(o))for(const b of o)for(const d of dbl)if(a[1]+b[1]+d[1]==r)return a[0]+' '+b[0]+' '+d[0];
-  return'';
+// Segments : [nom, valeur, difficulté comme fléchette de préparation]
+const SEG=(()=>{const o=[];for(let i=20;i>=1;i--)o.push(['T'+i,3*i,2],['S'+i,i,0],['D'+i,2*i,5]);o.push(['25',25,3],['Bull',50,4]);return o})();
+// Doubles préférés des joueurs, du meilleur au moins bon
+const DR=[20,16,18,12,10,8,14,6,4,2,19,17,15,13,11,9,7,5,3,1];
+const dpen=x=>x[0]=='Bull'?6:DR.indexOf(+x[0].slice(1));
+function checkout(r,darts,dout){
+  if(r<(dout?2:1)||r>(dout?170:180))return'';
+  const fin=dout?SEG.filter(x=>x[0][0]=='D'||x[0]=='Bull'):SEG,fp=x=>dout?dpen(x):x[2];
+  let best=null,bs=1e9;
+  const t=(set,f)=>{const s=set.reduce((a,x)=>a+x[2],0)+fp(f);if(s<bs){bs=s;best=[...set.sort((a,b)=>b[1]-a[1]),f]}};
+  for(const f of fin)if(f[1]==r)t([],f);
+  if(!best&&darts>1)for(const a of SEG)for(const f of fin)if(a[1]+f[1]==r)t([a],f);
+  if(!best&&darts>2)for(const a of SEG)for(const b of SEG)for(const f of fin)if(a[1]+b[1]+f[1]==r)t([a,b],f);
+  return best?best.map(x=>x[0]).join(' '):'';
 }
 
 // ---------- Cible ----------
@@ -200,7 +207,7 @@ function game(){
   if(S.winner!=null)return winScreen();
   const s=S.sides[S.cur],who=s.members[s.mi%s.members.length],cr=S.mode!='x01',left=3-S.turn.length;
   const sum=S.turn.reduce((a,d)=>a+d.val,0),rem=S.wait=='bust'?s.score:s.score-sum;
-  const co=!cr&&S.dout?checkout(rem,left):'';
+  const co=!cr&&left>0&&!S.wait?checkout(rem,left,S.dout):'';
   const title=cr?(S.mode=='wild'?'Cricket Wildcard':'Cricket'):S.start+(S.dout?' · Double out':'');
   const nums=cr?S.nums.filter(n=>n<25):[...Array(20)].map((_,i)=>i+1);
   const input=cfg.input=='clavier'
@@ -211,7 +218,7 @@ function game(){
   <div class="row" style="justify-content:space-between"><h1>${title}${S.bull50?' · Bull unique':''}</h1><span class="lbl">Tour ${S.round}</span></div>
   ${cr?crTable():x01Cards(rem)}
   <div class="turn"><span class="lbl">${esc(who)}${s.members.length>1?' · '+esc(s.name):''}</span>${[0,1,2].map(i=>`<div class="dart">${S.turn[i]?S.turn[i].l:'·'}</div>`).join('')}
-  ${co?`<span class="co">Finish : ${co}</span>`:''}</div>
+  ${co?`<span class="co">🎯 Finish conseillé : <b>${co}</b></span>`:''}</div>
   <div class="msg">${msg}</div>
   ${S.wait?`<button class="go" id="next">Volée : ${vol} · Joueur suivant</button>`:''}
   <div class="ctl3"><button class="k" id="miss">Raté</button><button class="k ctl" id="undo">Annuler</button><button class="k ctl" id="inp">${cfg.input=='clavier'?'Cible':'Clavier'}</button><button class="k ctl" id="menu">Menu</button></div>
