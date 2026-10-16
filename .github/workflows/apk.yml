@@ -24,7 +24,7 @@ jobs:
           rm -rf android/app/src/main/res/mipmap-anydpi-v26
           for d in android/app/src/main/res/mipmap-*; do cp icon-192.png $d/ic_launcher.png; cp icon-192.png $d/ic_launcher_round.png; done
       - name: Compiler
-        run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+        run: mkdir -p ~/.android && cp debug.keystore ~/.android/debug.keystore && cd android && chmod +x gradlew && ./gradlew assembleDebug
       - run: cp android/app/build/outputs/apk/debug/app-debug.apk Flechettes.apk
       - uses: softprops/action-gh-release@v2
         with:
