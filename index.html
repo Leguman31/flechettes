@@ -570,7 +570,7 @@ function winScreen(){
   <h2>Statistiques des joueurs</h2>${statsTable()}
   ${cr?`<h2>Tableau final</h2>${crTable()}`:''}
   ${S.gid?'<div class="hint">Match enregistré dans les stats des joueurs.</div>':''}
-  ${isScreen?'':`<div class="btns"><button class="go" id="again">Rejouer</button><button class="sec" id="new">Nouveau match</button><button class="sec" id="undo">Annuler la dernière fléchette</button></div>`}</div>`;
+  ${isScreen?'':`<div class="btns"><button class="go" id="again">Revanche</button><button class="sec" id="new">Retour au menu</button><button class="sec" id="undo">Annuler la dernière fléchette</button></div>`}</div>`;
   app.onclick=e=>{const t=e.target.closest('button');if(!t)return;
     if(t.id=='new')home('match');else if(t.id=='again')startGame();else if(t.id=='undo')undo()};
 }
@@ -677,7 +677,7 @@ function tResult(){
   app.innerHTML=`<div class="win"><div class="banner"><small>${D.name} · ${esc(T.name)}</small><div class="disp">${D.fmt(T.score)}</div>${rec?'<small>Nouveau record !</small>':''}</div>
   ${T.pid?(T.prev!=null?`<div class="hint">Record précédent : ${D.fmt(T.prev)}</div>`:''):'<div class="hint">Joueur invité : ce résultat n’est pas enregistré.</div>'}
   <div class="kpis"><div class="kpi"><b>${T.darts}</b><small>fléchettes lancées</small></div></div>
-  ${isScreen?'':'<div class="btns"><button class="go" id="again">Recommencer</button><button class="sec" id="back">Autre exercice</button><button class="sec" id="undo">Annuler la dernière fléchette</button></div>'}</div>`;
+  ${isScreen?'':'<div class="btns"><button class="go" id="again">Recommencer</button><button class="sec" id="back">Retour au menu</button><button class="sec" id="undo">Annuler la dernière fléchette</button></div>'}</div>`;
   app.onclick=e=>{const t=e.target.closest('button');if(!t)return;
     if(t.id=='again'){cfg.drill=T.drill;tStart(T.name)}else if(t.id=='back'){T=null;save();home('train')}else if(t.id=='undo')tUndo()};
 }
