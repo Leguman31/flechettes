@@ -150,7 +150,8 @@ a{color:var(--hl)}
 .kpi small{color:var(--mut);font-size:.85rem}
 .kpi.hl b{color:var(--hl)}
 .hist{display:flex;flex-direction:column;gap:4px}
-.hrow{display:flex;justify-content:space-between;gap:10px;background:var(--band);padding:9px 12px;border-radius:4px}
+.hrow{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--band);padding:11px 12px;border-radius:4px;text-align:left;width:100%}
+.hrow:hover{background:var(--band2)}
 .hrow span{min-width:0;overflow-wrap:anywhere}
 .hrow small{color:var(--mut);margin-right:8px;font-variant-numeric:tabular-nums}
 .hrow .w{color:var(--green);font-weight:700}.hrow .l{color:var(--mut);font-weight:700}.hrow .s{color:var(--hl);font-weight:700}
@@ -554,13 +555,14 @@ function reroll(){
 function undo(){if(!hist.length)return;const gid=S.gid;S=JSON.parse(hist.pop());if(gid&&S.gid!==gid)removeGame(gid);msg='';mult=1;save();game()}
 
 // ---------- Match : fin ----------
-function statsTable(){
-  const w=S.sides[S.winner].members,nm=S.order,cr=S.mode!='x01';
-  const rows=cr?[['Marques par tour',p=>avg(p)],['Meilleur tour',p=>p.best+(p.best>1?' marques':' marque')],[S.ct?'Points infligés':'Points marqués',p=>p.pts],['Fléchettes',p=>p.darts]]
+function statsTableOf(pl,cr,ct){
+  const rows=cr?[['Marques par tour',p=>avg(p)],['Meilleur tour',p=>p.best+(p.best>1?' marques':' marque')],[ct?'Points infligés':'Points marqués',p=>p.pts],['Fléchettes',p=>p.darts]]
     :[['Moyenne (3 fl.)',p=>avg(p)],['Meilleure volée',p=>p.best],['100+',p=>p.t100],['140+',p=>p.t140],['180',p=>p.t180],['Plus gros finish',p=>p.co||'–'],['Fléchettes',p=>p.darts]];
-  return `<div class="tbl stats"><table><thead><tr><th></th>${nm.map(n=>`<th class="${w.includes(n)?'cur':''}">${esc(n)}</th>`).join('')}</tr></thead>
-  <tbody>${rows.map(([l,f])=>`<tr><th>${l}</th>${nm.map(n=>`<td class="${w.includes(n)?'w':''}">${f(S.ps[n])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  return `<div class="tbl stats"><table><thead><tr><th></th>${pl.map(p=>`<th class="${p.won?'cur':''}">${esc(p.name)}</th>`).join('')}</tr></thead>
+  <tbody>${rows.map(([l,f])=>`<tr><th>${l}</th>${pl.map(p=>`<td class="${p.won?'w':''}">${f(p)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
+function statsTable(){const w=S.sides[S.winner].members;
+  return statsTableOf(S.order.map(n=>({...S.ps[n],name:n,won:w.includes(n)})),S.mode!='x01',S.ct)}
 function winScreen(){
   const w=S.sides[S.winner],cr=S.mode!='x01';
   app.innerHTML=`<div class="win"><div class="banner"><small>${cr?(S.mode=='wild'?'Wildcard':'Cricket'):S.start} · vainqueur</small><div class="disp">${esc(w.name)}</div>
@@ -681,40 +683,62 @@ function tResult(){
 }
 
 // ---------- Stats ----------
-const modeLabel=d=>d.mode=='x01'?String(d.start):(d.mode=='wild'?'Wildcard':'Cricket')+(d.ct?' cut throat':'');
+const modeKey=d=>d.mode=='x01'?String(d.start):d.mode;
+const MODE_NAMES={'301':'301','501':'501','701':'701',cricket:'Cricket',wild:'Wildcard'};
+const modeLabel=d=>MODE_NAMES[modeKey(d)]+(d.ct?' cut throat':'')+(d.teams?' en équipe':'');
+const dtFr=s=>new Date(s).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
 function statsFor(name){
-  const ids=idsOf(name),r={m:0,w:0,x:{n:0,d:0,t:0,best:0,ba:0,t100:0,t140:0,t180:0,co:0},c:{n:0,d:0,t:0,best:0},dr:{},recent:[],tr:0};
+  const ids=idsOf(name),r={m:0,w:0,tr:0,modes:{},dr:{},list:[]};
   for(const g of DB.games){const d=g.data;
-    if(g.kind=='match'){const p=(d.players||[]).find(p=>ids.has(p.pid));if(!p)continue;r.m++;if(p.won)r.w++;
-      if(d.mode=='x01'){const x=r.x;x.n++;x.d+=p.darts;x.t+=p.total;x.best=Math.max(x.best,p.best);x.t100+=p.t100;x.t140+=p.t140;x.t180+=p.t180;x.co=Math.max(x.co,p.co||0);if(p.darts>=9)x.ba=Math.max(x.ba,p.total/p.darts*3)}
-      else{const c=r.c;c.n++;c.d+=p.darts;c.t+=p.total;c.best=Math.max(c.best,p.best)}
-      if(r.recent.length<15)r.recent.push({at:g.at,label:modeLabel(d)+(d.teams?' en équipe':''),res:p.won?'Victoire':'Défaite',cls:p.won?'w':'l'})}
+    if(g.kind=='match'){const p=(d.players||[]).find(p=>ids.has(p.pid));if(!p)continue;const k=modeKey(d);if(!MODE_NAMES[k])continue;
+      r.m++;if(p.won)r.w++;
+      const o=r.modes[k]||(r.modes[k]={n:0,w:0,d:0,t:0,best:0,ba:0,co:0,t180:0,t140:0,t100:0});
+      o.n++;if(p.won)o.w++;o.d+=p.darts;o.t+=p.total;o.best=Math.max(o.best,p.best);o.co=Math.max(o.co,p.co||0);
+      o.t180+=p.t180||0;o.t140+=p.t140||0;o.t100+=p.t100||0;if(k!='cricket'&&k!='wild'&&p.darts>=9)o.ba=Math.max(o.ba,p.total/p.darts*3);
+      r.list.push({g,k,label:modeLabel(d),res:p.won?'Victoire':'Défaite',cls:p.won?'w':'l'})}
     else if(g.kind=='drill'&&ids.has(d.pid)){const D=DRILLS[d.drill];if(!D)continue;r.tr++;
-      const o=r.dr[d.drill]||(r.dr[d.drill]={n:0,best:null});o.n++;if(o.best==null||(D.better=='low'?d.score<o.best:d.score>o.best))o.best=d.score;
-      if(r.recent.length<15)r.recent.push({at:g.at,label:D.name,res:D.fmt(d.score),cls:'s'})}}
+      const o=r.dr[d.drill]||(r.dr[d.drill]={n:0,best:null,sum:0,last:null});o.n++;o.sum+=d.score;if(o.last==null)o.last=d.score;
+      if(o.best==null||(D.better=='low'?d.score<o.best:d.score>o.best))o.best=d.score;
+      r.list.push({g,k:'train',label:D.name,res:D.fmt(d.score).replace(/ \(.*/,''),cls:'s'})}}
   return r;
 }
-let statDel=false;
+let statDel=false,sv={flt:'all',lim:20,gid:null,del:false};
 function statsView(){
   const pane=$('pane'),all=names();
+  if(sv.gid)return gameDetail();
   if(!all.length){pane.innerHTML=`<p class="txt">Pas encore de stats. Joue un match ou un entraînement avec un vrai nom de joueur : ses stats apparaîtront ici.</p>
     ${!user?'<p class="hint">Avec un compte, tes stats sont aussi sauvegardées en ligne. Va dans l’onglet Compte.</p>':''}`;return}
   if(!all.some(n=>lc(n)==lc(cfg.statName)))cfg.statName=all[0];
-  const n=cfg.statName,r=statsFor(n),x=r.x,c=r.c,k=(v,l,h)=>`<div class="kpi ${h?'hl':''}"><b>${v}</b><small>${l}</small></div>`;
+  const n=cfg.statName,r=statsFor(n),k=(v,l,h)=>`<div class="kpi ${h?'hl':''}"><b>${v}</b><small>${l}</small></div>`;
+  const order=['301','501','701','cricket','wild'].filter(x=>r.modes[x]);
+  const card=x=>{const o=r.modes[x],cr=x=='cricket'||x=='wild',a=o.d?fmt(o.t/o.d*3):'–';
+    return `<button class="mode ${sv.flt==x?'on':''}" data-flt="${x}"><b>${MODE_NAMES[x]}</b>
+    <small>${o.n} partie${o.n>1?'s':''} · ${o.w} victoire${o.w>1?'s':''} (${Math.round(o.w/o.n*100)} %)</small>
+    <em>${cr?a+' marques par tour':'Moyenne '+a}</em>
+    <small>${cr?'Meilleur tour : '+o.best+' marques':'Meilleure volée '+o.best+' · finish '+(o.co||'–')+(o.t180?' · '+o.t180+'×180':'')}</small></button>`};
+  const dcard=([id,o])=>{const D=DRILLS[id];return `<button class="mode ${sv.flt=='d:'+id?'on':''}" data-flt="d:${id}"><b style="font-size:1.5rem">${D.name}</b>
+    <em>Record : ${D.fmt(o.best).replace(/ \(.*/,'')}</em><small>${o.n} séance${o.n>1?'s':''} · moyenne ${D.fmt(Math.round(o.sum/o.n)).replace(/ \(.*/,'')}</small></button>`};
+  const list=r.list.filter(e=>sv.flt=='all'||(sv.flt=='train'?e.k=='train':sv.flt.startsWith('d:')?e.g.data.drill==sv.flt.slice(2)&&e.k=='train':e.k==sv.flt));
+  const fl=[['all','Tout'],...order.map(x=>[x,MODE_NAMES[x]]),...(r.tr?[['train','Entraînement']]:[])];
   pane.innerHTML=`<div class="chips">${all.map(a=>`<button class="chip ${a==n?'on':''}" data-sn="${esc(a)}">${esc(a)}</button>`).join('')}</div>
-  <h2>Matchs</h2>
-  <div class="kpis">${k(r.m,'matchs joués')}${k(r.w,'victoires',1)}${k(r.m?Math.round(r.w/r.m*100)+' %':'–','de victoires')}</div>
-  ${x.n?`<h2>301 · 501 · 701</h2><div class="kpis">${k(x.d?fmt(x.t/x.d*3):'–','moyenne (3 fl.)',1)}${k(x.ba?fmt(x.ba):'–','meilleure moyenne d’un match')}${k(x.best,'meilleure volée')}${k(x.co||'–','plus gros finish')}${k(x.t180,'180')}${k(x.t140,'140+')}${k(x.t100,'100+')}</div>`:''}
-  ${c.n?`<h2>Cricket</h2><div class="kpis">${k(c.d?fmt(c.t/c.d*3):'–','marques par tour',1)}${k(c.best,'meilleur tour (marques)')}${k(c.n,'matchs de cricket')}</div>`:''}
-  ${r.tr?`<h2>Records d’entraînement</h2><div class="kpis">${Object.entries(r.dr).map(([id,o])=>k(DRILLS[id].fmt(o.best).replace(/ \(.*/,''),DRILLS[id].name+' · '+o.n+' fois')).join('')}</div>`:''}
-  ${r.recent.length?`<h2>Dernières parties</h2><div class="hist">${r.recent.map(h=>`<div class="hrow"><span><small>${dateFr(h.at)}</small>${h.label}</span><span class="${h.cls}">${h.res}</span></div>`).join('')}</div>`:''}
+  <h2>Résumé</h2>
+  <div class="kpis">${k(r.m,'matchs joués')}${k(r.w,'victoires',1)}${k(r.m?Math.round(r.w/r.m*100)+' %':'–','de victoires')}${k(r.tr,'entraînements')}</div>
+  ${order.length?`<h2>Par jeu</h2><div class="modes">${order.map(card).join('')}</div>`:''}
+  ${r.tr?`<h2>Entraînement</h2><div class="modes">${Object.entries(r.dr).map(dcard).join('')}</div>`:''}
+  <h2>Parties</h2>
+  <div class="chips">${fl.map(([id,l])=>`<button class="chip ${sv.flt==id||(id=='train'&&sv.flt.startsWith('d:'))?'on':''}" data-flt="${id}">${l}</button>`).join('')}</div>
+  ${list.length?`<div class="hist">${list.slice(0,sv.lim).map(e=>`<button class="hrow" data-gid="${e.g.id}"><span><small>${dtFr(e.g.at)}</small>${e.label}</span><span class="${e.cls}">${e.res} ›</span></button>`).join('')}</div>
+  ${list.length>sv.lim?`<button class="ghost" id="more">Voir plus (${list.length-sv.lim} restantes)</button>`:''}`:'<p class="hint">Aucune partie pour ce filtre.</p>'}
   <h2>Gérer ce joueur</h2>
   <div class="card"><label>Nom du joueur<input id="rn" value="${esc(n)}"></label><div class="msg">${err}</div>
   <div class="row"><button class="sec" id="rename">Renommer</button><button class="danger ${statDel?'on':''}" id="pdel">${statDel?'Confirmer : supprimer '+esc(n):'Supprimer ce joueur'}</button></div>
   ${statDel?'<div class="hint">Ses stats ne seront plus affichées. Touche à nouveau pour confirmer.</div>':''}</div>
   ${user?`<p class="hint">${syncing?'Synchronisation en cours…':DB.last?'Synchronisé avec ton compte le '+new Date(DB.last).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})+'.':''}</p>`:''}`;
   pane.onclick=e=>{const t=e.target.closest('button');if(!t)return;const d=t.dataset;err='';
-    if(d.sn){cfg.statName=d.sn;statDel=false}
+    if(d.sn){cfg.statName=d.sn;statDel=false;sv.flt='all';sv.lim=20}
+    else if(d.flt){sv.flt=sv.flt==d.flt&&d.flt!='all'?'all':d.flt;sv.lim=20}
+    else if(d.gid){sv.gid=d.gid;sv.del=false;window.scrollTo&&window.scrollTo(0,0)}
+    else if(t.id=='more')sv.lim+=20
     else if(t.id=='rename'){const v=$('rn').value.trim();
       if(!v||v.length>40)err='Le nom doit faire entre 1 et 40 caractères.';
       else if(lc(v)!=lc(n)&&names().some(a=>lc(a)==lc(v)))err='Un joueur porte déjà ce nom.';
@@ -722,6 +746,27 @@ function statsView(){
         cfg.players.forEach(p=>{if(lc(p.n)==lc(n))p.n=v});if(lc(cfg.tp)==lc(n))cfg.tp=v;saveDB();sync()}}
     else if(t.id=='pdel'){if(!statDel)statDel=true;else{DB.profiles.forEach(p=>{if(lc(p.name)==lc(n)){p.archived=true;p.sync=0}});statDel=false;cfg.statName='';saveDB();sync()}}
     save();statsView()};
+}
+function gameDetail(){
+  const pane=$('pane'),g=DB.games.find(x=>x.id==sv.gid);
+  if(!g){sv.gid=null;return statsView()}
+  const d=g.data;let body;
+  if(g.kind=='match'){const cr=d.mode!='x01',win=(d.players||[]).filter(p=>p.won);
+    const tags=[d.mode=='x01'&&d.dout?'Double out':'',d.ct?'Cut throat':'',d.teams?'Équipes':''].filter(Boolean);
+    body=`<div class="banner"><small>${modeLabel(d)} · ${dtFr(g.at)}</small><div class="disp">${win.map(p=>esc(p.name)).join(', ')||'–'}</div><small>vainqueur${win.length>1?'s':''}</small></div>
+    ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}
+    <h2>Stats des joueurs</h2>${statsTableOf(d.players||[],cr,d.ct)}`}
+  else{const D=DRILLS[d.drill],rec=bestDrill(d.name,d.drill);
+    body=`<div class="banner"><small>${D.name} · ${dtFr(g.at)}</small><div class="disp">${D.fmt(d.score)}</div><small>${esc(d.name)}</small></div>
+    <div class="kpis"><div class="kpi"><b>${d.darts}</b><small>fléchettes lancées</small></div><div class="kpi hl"><b>${rec!=null?D.fmt(rec).replace(/ \(.*/,''):'–'}</b><small>record actuel</small></div></div>
+    ${rec===d.score?'<p class="good">C’est le record de ce joueur.</p>':''}`}
+  pane.innerHTML=`<button class="sec" id="sback" style="align-self:flex-start">‹ Retour aux stats</button>${body}
+  <button class="danger ${sv.del?'on':''}" id="gdel" style="align-self:flex-start">${sv.del?'Confirmer : supprimer cette partie':'Supprimer cette partie'}</button>
+  ${sv.del?'<div class="hint">Elle sera retirée des stats de tous ses joueurs. Touche à nouveau pour confirmer.</div>':''}`;
+  pane.onclick=e=>{const t=e.target.closest('button');if(!t)return;
+    if(t.id=='sback'){sv.gid=null;sv.del=false}
+    else if(t.id=='gdel'){if(!sv.del)sv.del=true;else{removeGame(g.id);sv.gid=null;sv.del=false}}
+    statsView()};
 }
 
 // ---------- Compte ----------
