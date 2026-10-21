@@ -16,7 +16,7 @@ jobs:
         with: { distribution: temurin, java-version: 17 }
       - name: Préparer le projet Android
         run: |
-          mkdir www && cp index.html manifest.json sw.js supabase.js icon-*.png www/
+          mkdir www && cp index.html manifest.json sw.js supabase.js qrcode.js icon-*.png www/
           npm init -y
           npm i @capacitor/core@6.2.0 @capacitor/cli@6.2.0 @capacitor/android@6.2.0
           npx cap init "Fléchettes" fr.maison.flechettes --web-dir www
