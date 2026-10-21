@@ -379,7 +379,8 @@ const opt=(id,on,t,d)=>`<button class="opt" role="switch" aria-checked="${on}" d
 let inv=false;
 function setup(){
   const P=cfg.players,x=cfg.mode=='x01',cur=x?String(cfg.start):cfg.mode,pane=$('pane');
-  const quick=names().filter(n=>!P.some(p=>lc(p.n)==lc(n))).slice(0,12);
+  const me=user?myPseudo():'',quick=names().filter(n=>lc(n)!=lc(me)&&!P.some(p=>lc(p.n)==lc(n))).slice(0,12);
+  const meChip=me&&!P.some(p=>lc(p.n)==lc(me))?`<button class="chip on" data-addp="${esc(me)}">+ Moi (${esc(me)})</button>`:'';
   pane.innerHTML=`<h2>Jeu</h2>
   <div class="modes">${MODES.map(([id,l,d])=>`<button class="mode ${cur==id?'on':''}" data-mode="${id}"><b>${l}</b><small>${d}</small></button>`).join('')}</div>
   <h2>Règles</h2>
@@ -395,7 +396,7 @@ function setup(){
     <input id="n${i}" value="${esc(p.n)}" list="pl-list" aria-label="Nom du joueur ${i+1}" ${p.uid?'readonly':''}>${p.uid?'<span class="tag hl" title="Ses stats iront dans son compte">Compte</span>':''}
     ${cfg.random?'':`<button class="ico" data-up="${i}" aria-label="Monter">↑</button><button class="ico" data-dn="${i}" aria-label="Descendre">↓</button>`}
     <button class="ico" data-del="${i}" aria-label="Retirer">✕</button></div>`).join('')}</div>
-  ${quick.length?`<div class="chips">${quick.map(n=>`<button class="chip" data-addp="${esc(n)}">+ ${esc(n)}</button>`).join('')}</div>`:''}
+  ${quick.length||meChip?`<div class="chips">${meChip}${quick.map(n=>`<button class="chip" data-addp="${esc(n)}">+ ${esc(n)}</button>`).join('')}</div>`:''}
   <div class="hint">Chaque joueur nommé garde ses stats. « Joueur 1 », « Joueur 2 »… jouent en invités.${cfg.teams?' Touche la lettre d’un joueur pour changer son équipe.':''}</div>
   <div class="row"><button class="ghost" id="add">+ Ajouter un joueur</button>${sb?`<button class="ghost" id="inv">${inv?'Fermer l’invitation':'+ Ajouter un joueur avec son compte (QR code)'}</button>`:''}</div>
   ${inv&&sb?`<div class="link"><div class="qr" id="iqr" style="width:min(220px,50vw)"></div><span><b>Scanne avec ton téléphone</b><br><small class="hint">Le joueur scanne ce code, ou tape ${cfg.room} dans l’onglet Compte de son appli. Il se connecte à son compte et apparaît ici : ses stats du match iront dans son compte.</small><br><b class="disp" style="font-size:2.6rem;color:var(--hl)">${cfg.room}</b></span></div>`:''}
@@ -709,10 +710,11 @@ const DRILLS={
 function bestDrill(name,id){const ids=idsOf(name),D=DRILLS[id];let b=null;
   DB.games.forEach(g=>{if(g.kind=='drill'&&g.data.drill==id&&ids.has(g.data.pid)){const s=g.data.score;if(b==null||(D.better=='low'?s<b:s>b))b=s}});return b}
 function trainMenu(){
-  const pane=$('pane'),n=cfg.tp||'';
+  if(!cfg.tp&&user)cfg.tp=myPseudo();
+  const pane=$('pane'),n=cfg.tp||'',me=user?myPseudo():'',tl=[...(me?[me]:[]),...names().filter(x=>lc(x)!=lc(me))].slice(0,12);
   pane.innerHTML=`<h2>Joueur</h2>${datalist()}
   <div class="prow"><input id="tp" list="pl-list" value="${esc(n)}" placeholder="Ton nom" aria-label="Nom du joueur"></div>
-  ${names().length?`<div class="chips">${names().slice(0,12).map(x=>`<button class="chip ${lc(x)==lc(n)?'on':''}" data-tp="${esc(x)}">${esc(x)}</button>`).join('')}</div>`:''}
+  ${tl.length?`<div class="chips">${tl.map(x=>`<button class="chip ${lc(x)==lc(n)?'on':''}" data-tp="${esc(x)}">${lc(x)==lc(me)?'Moi ('+esc(x)+')':esc(x)}</button>`).join('')}</div>`:''}
   <h2>Exercice</h2>
   <div class="modes">${Object.entries(DRILLS).map(([id,D])=>{const b=n?bestDrill(n,id):null;
     return `<button class="mode ${cfg.drill==id?'on':''}" data-drill="${id}"><b>${D.name}</b><small>${D.desc}</small>${b!=null?`<em>Record : ${D.fmt(b)}</em>`:''}</button>`}).join('')}</div>
