@@ -295,13 +295,15 @@ function pushState(){if(isScreen||ro||!chan||!chanOK)return;
   try{chan.send({type:'broadcast',event:'state',payload:p}).catch(()=>{})}catch(e){}}
 const genCode=()=>{const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return[...Array(4)].map(()=>A[Math.floor(Math.random()*A.length)]).join('')};
 // Téléphone : chaque partie a un code ; l'écran tape ce code pour l'afficher
-function phoneLink(){if(!sb)return;if(!cfg.room){cfg.room=genCode();save()}
+function newRoom(){cfg.room=genCode();cfg.roomDay=new Date().toDateString();save()}
+function phoneLink(){if(!sb)return;if(!cfg.room||cfg.roomDay!==new Date().toDateString())newRoom();
   if(chan&&chan.topic&&chan.topic.endsWith(cfg.room))return;
   openChan(cfg.room,(ev,p)=>{if(ev=='hello')pushState();else if(ev=='status'&&chanOK)pushState();else if(ev=='join')onJoin(p);else if(ev=='leave')onLeave(p)})}
 function onLeave(p){if(!p||!p.uid)return;const P=cfg.players,i=P.findIndex(x=>x.uid==p.uid);if(i<0)return;
   const n=P[i].n;if(P.length>1)P.splice(i,1);else{P[i]={n:'Joueur 1',t:0}}save();linkNote=n+' a quitté la partie.';if(screen=='home'&&view=='match')setup()}
 // Tablette : un joueur rejoint avec son compte (scan du QR code)
-function onJoin(p){if(!p||!p.uid||!p.pseudo)return;const P=cfg.players,name=String(p.pseudo).trim().slice(0,40)||'Invité';
+function onJoin(p){if(!p||!p.uid||!p.pseudo)return;if(!inv||screen!='home'||view!='match')return;// seulement pendant que l'invitation est affichée
+  const P=cfg.players,name=String(p.pseudo).trim().slice(0,40)||'Invité';
   let i=P.findIndex(x=>x.uid==p.uid);
   if(i<0)i=P.findIndex(x=>!x.uid&&lc(x.n)==lc(name));
   if(i<0)i=P.findIndex(x=>!x.uid&&guest(x.n));
@@ -381,7 +383,7 @@ function setup(){
   const P=cfg.players,x=cfg.mode=='x01',cur=x?String(cfg.start):cfg.mode,pane=$('pane');
   const me=user?myPseudo():'',quick=names().filter(n=>lc(n)!=lc(me)&&!P.some(p=>lc(p.n)==lc(n))).slice(0,12);
   const meChip=me&&!P.some(p=>lc(p.n)==lc(me))?`<button class="chip on" data-addp="${esc(me)}">+ Moi (${esc(me)})</button>`:'';
-  pane.innerHTML=`<h2>Jeu</h2>
+  pane.innerHTML=`${sb&&cfg.room?`<div class="row" style="align-items:center"><span class="hint" style="flex:1 1 220px">Code écran du jour : <b style="color:var(--hl)">${cfg.room}</b>. Il change chaque jour.</span><button class="sec" id="newcode" style="flex:0 0 auto">Nouveau code</button></div>`:''}<h2>Jeu</h2>
   <div class="modes">${MODES.map(([id,l,d])=>`<button class="mode ${cur==id?'on':''}" data-mode="${id}"><b>${l}</b><small>${d}</small></button>`).join('')}</div>
   <h2>Règles</h2>
   <div class="opts">
@@ -419,6 +421,7 @@ function setup(){
     else if(d.addp){const g=P.findIndex(p=>guest(p.n));if(g>=0)P[g].n=d.addp;else P.push({n:d.addp,t:P.length%2})}
     else if(t.id=='add')P.push({n:'Joueur '+(P.length+1),t:P.length%2})
     else if(t.id=='inv'){inv=!inv;linkNote='';if(inv)phoneLink()}
+    else if(t.id=='newcode'){newRoom();phoneLink();linkNote='Nouveau code : '+cfg.room+'. Tape-le sur l’écran sous la cible.'}
     else if(t.id=='resume'){mult=1;msg='';return game()}
     else if(t.id=='start'){if(startGame())return}
     save();setup();
