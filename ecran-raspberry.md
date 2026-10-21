@@ -7,7 +7,7 @@ Matériel : un Raspberry Pi avec Raspberry Pi OS (version avec bureau), un adapt
 
 ```
 mkdir -p ~/.config/labwc
-echo 'chromium --kiosk --noerrdialogs --disable-infobars --password-store=basic https://scoreflechettes.netlify.app/#ecran &' >> ~/.config/labwc/autostart
+echo 'chromium --kiosk --noerrdialogs --disable-infobars --password-store=basic https://scoreflechettes.fr/#ecran &' >> ~/.config/labwc/autostart
 sudo raspi-config nonint do_blanking 1
 ```
 

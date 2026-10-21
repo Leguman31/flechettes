@@ -722,7 +722,7 @@ function statsView(){
 // ---------- Compte ----------
 function accountView(){
   const pane=$('pane');
-  if(!sb){pane.innerHTML=`<div class="card"><p class="txt">Les comptes ne sont pas disponibles ici. Ouvre l’appli sur <b>scoreflechettes.netlify.app</b> avec une connexion internet pour créer ton compte.</p><p class="hint">Tu peux jouer et garder tes stats sur cet appareil sans compte.</p></div>`;return}
+  if(!sb){pane.innerHTML=`<div class="card"><p class="txt">Les comptes ne sont pas disponibles ici. Ouvre l’appli sur <b>scoreflechettes.fr</b> avec une connexion internet pour créer ton compte.</p><p class="hint">Tu peux jouer et garder tes stats sur cet appareil sans compte.</p></div>`;return}
   if(user){const ps=(user.user_metadata&&user.user_metadata.pseudo)||user.email;
     pane.innerHTML=`<div class="card"><div class="disp" style="font-size:2.4rem">${esc(ps)}</div><div class="hint">${esc(user.email)}</div>
     <p class="txt">Tes joueurs, tes matchs et tes entraînements sont sauvegardés dans ton compte et se retrouvent sur tous tes appareils.</p>
