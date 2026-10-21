@@ -129,8 +129,9 @@ a{color:var(--hl)}
 .tot-q{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin:0}
 
 .bwrap{position:relative;width:100%;max-width:calc(100vh - 40px);max-width:calc(100dvh - 40px);justify-self:center}
-.bwrap .board{touch-action:none;max-width:100%}
-.loupe{position:absolute;width:150px;height:150px;border-radius:50%;border:3px solid var(--hl);box-shadow:0 6px 24px rgba(0,0,0,.55);pointer-events:none;z-index:5}
+.bwrap{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.bwrap .board{touch-action:none;max-width:100%;-webkit-touch-callout:none}
+.loupe{position:absolute;width:180px;height:180px;border-radius:50%;border:3px solid var(--hl);box-shadow:0 6px 24px rgba(0,0,0,.55);pointer-events:none;z-index:5}
 .lp-l{position:absolute;transform:translateX(-50%);background:var(--hl);color:var(--ink);font-family:var(--disp);font-weight:900;font-size:1.6rem;padding:2px 12px;border-radius:4px;pointer-events:none;z-index:5;white-space:nowrap}
 .board{display:block;width:100%;max-width:calc(100vh - 40px);max-width:calc(100dvh - 40px);aspect-ratio:1;justify-self:center;cursor:crosshair}
 
@@ -599,22 +600,34 @@ function hiBoard(cv,h){if(!h||h.v==0)return;const s=cv.clientWidth,d=devicePixel
     const[r0,r1]=r<T0?[R25,T0]:r<T1?[T0,T1]:r<D0?[T1,D0]:[D0,1];c.arc(0,0,r1*P,a0,a1);c.arc(0,0,r0*P,a1,a0,true)}
   c.closePath();c.fillStyle='rgba(255,210,63,.55)';c.fill();c.lineWidth=3;c.strokeStyle='#ffd23f';c.stroke()}
 // Appui court = marque ; appui long = loupe + case allumée, on glisse puis on lève le doigt
-function boardPress(bd,onThrow){let timer=null,hold=false,down=false,last=null,start=null;const lp=$('lp'),ll=$('lpl'),L=150;
+function boardPress(bd,onThrow){let timer=null,hold=false,down=false,last=null,start=null;const lp=$('lp'),ll=$('lpl');
+  const L=Math.round(Math.min(260,Math.max(180,bd.clientWidth*.42)));
   const hide=()=>{if(lp)lp.hidden=true;if(ll)ll.hidden=true;drawBoard(bd)};
   const show=pt=>{const h=hit(bd,pt);drawBoard(bd);hiBoard(bd,h);if(!lp||!ll)return;
     const b=bd.getBoundingClientRect(),w=bd.parentNode.getBoundingClientRect(),px=pt.clientX-w.left,py=pt.clientY-w.top,d=devicePixelRatio||1;
-    let lx=Math.max(0,Math.min(w.width-L,px-L/2)),ly=py-L-60;if(ly<0)ly=Math.min(w.height-L,py+60);
-    lp.hidden=false;lp.style.left=lx+'px';lp.style.top=ly+'px';lp.width=lp.height=L*d;
-    const c=lp.getContext('2d'),k=bd.width/b.width,z=2.6,src=L/z*k,sx=(pt.clientX-b.left)*k,sy=(pt.clientY-b.top)*k;
+    let lx=Math.max(0,Math.min(w.width-L,px-L/2)),ly=py-L-70;if(ly<0)ly=Math.min(w.height-L,py+70);
+    lp.hidden=false;lp.style.width=lp.style.height=L+'px';lp.style.left=lx+'px';lp.style.top=ly+'px';lp.width=lp.height=L*d;
+    const c=lp.getContext('2d'),k=bd.width/b.width,z=2.4,src=L/z*k,sx=(pt.clientX-b.left)*k,sy=(pt.clientY-b.top)*k,m=L*d/2;
     c.fillStyle='#07101f';c.fillRect(0,0,L*d,L*d);c.drawImage(bd,sx-src/2,sy-src/2,src,src,0,0,L*d,L*d);
-    c.strokeStyle='#fff';c.lineWidth=2*d;c.beginPath();c.moveTo(L*d/2-10*d,L*d/2);c.lineTo(L*d/2+10*d,L*d/2);c.moveTo(L*d/2,L*d/2-10*d);c.lineTo(L*d/2,L*d/2+10*d);c.stroke();
+    c.strokeStyle='#fff';c.lineWidth=2*d;c.beginPath();c.moveTo(m-12*d,m);c.lineTo(m+12*d,m);c.moveTo(m,m-12*d);c.lineTo(m,m+12*d);c.stroke();
     ll.hidden=false;ll.textContent=h?(h.v==0?'Hors cible':lab(h.v,h.m)):'';ll.style.left=(lx+L/2)+'px';ll.style.top=(ly+L+6)+'px'};
-  const pt=e=>({clientX:e.clientX,clientY:e.clientY});
-  bd.onpointerdown=e=>{e.preventDefault();down=true;hold=false;last=start=pt(e);try{bd.setPointerCapture(e.pointerId)}catch(x){}
-    clearTimeout(timer);timer=setTimeout(()=>{if(down){hold=true;show(last)}},230)};
-  bd.onpointermove=e=>{if(!down)return;last=pt(e);if(hold)show(last);else if(Math.hypot(last.clientX-start.clientX,last.clientY-start.clientY)>14){clearTimeout(timer);hold=true;show(last)}};
-  bd.onpointerup=e=>{if(!down)return;down=false;clearTimeout(timer);last=pt(e);const h=hit(bd,last),was=hold;hold=false;if(was)hide();if(h)onThrow(h.v,h.m,h.x,h.y)};
-  bd.onpointercancel=()=>{down=false;hold=false;clearTimeout(timer);hide()};
+  const begin=p=>{down=true;hold=false;last=start=p;clearTimeout(timer);timer=setTimeout(()=>{if(down){hold=true;show(last)}},230)};
+  const move=p=>{if(!down)return;last=p;if(hold)show(last);else if(Math.hypot(p.clientX-start.clientX,p.clientY-start.clientY)>14){clearTimeout(timer);hold=true;show(last)}};
+  const end=p=>{if(!down)return;down=false;clearTimeout(timer);if(p)last=p;const was=hold;hold=false;if(was)hide();const h=hit(bd,last);if(h)onThrow(h.v,h.m,h.x,h.y)};
+  const cancel=()=>{down=false;hold=false;clearTimeout(timer);hide()};
+  // Tactile (iPhone, Android) : événements natifs, rien n'est marqué avant de lever le doigt
+  const tp=e=>{const t=e.changedTouches[0];return{clientX:t.clientX,clientY:t.clientY}};
+  bd.addEventListener('touchstart',e=>{e.preventDefault();begin(tp(e))},{passive:false});
+  bd.addEventListener('touchmove',e=>{e.preventDefault();move(tp(e))},{passive:false});
+  bd.addEventListener('touchend',e=>{e.preventDefault();end(tp(e))},{passive:false});
+  bd.addEventListener('touchcancel',cancel);
+  bd.oncontextmenu=e=>e.preventDefault();
+  // Souris / stylet
+  const pp=e=>({clientX:e.clientX,clientY:e.clientY});
+  bd.onpointerdown=e=>{if(e.pointerType=='touch')return;e.preventDefault();try{bd.setPointerCapture(e.pointerId)}catch(x){}begin(pp(e))};
+  bd.onpointermove=e=>{if(e.pointerType=='touch')return;move(pp(e))};
+  bd.onpointerup=e=>{if(e.pointerType=='touch')return;end(pp(e))};
+  bd.onpointercancel=e=>{if(e.pointerType=='touch')return;cancel()};
 }
 const redraw=()=>{const b=$('bd');if(b)drawBoard(b);drawLogo()};
 addEventListener('resize',redraw);try{document.fonts.ready.then(redraw)}catch(e){}
@@ -1080,7 +1093,7 @@ function privacyView(){
 }
 
 // Empêche le zoom par double-tap (Safari) : deux appuis rapides = deux clics
-let lastT=0;document.addEventListener('touchend',e=>{const n=Date.now(),b=e.target.closest('button,canvas');
+let lastT=0;document.addEventListener('touchend',e=>{const n=Date.now(),b=e.target.closest('button');
   if(b&&n-lastT<350){e.preventDefault();if(b.tagName=='BUTTON')b.click()}lastT=n},{passive:false});
 try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}
 {const jn=/^#rejoindre-([A-Z0-9]{4})$/i.exec(location.hash);
