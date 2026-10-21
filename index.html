@@ -113,7 +113,8 @@ a{color:var(--hl)}
 .co{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--green);color:var(--ink);padding:6px 14px;clip-path:polygon(0 0,100% 0,calc(100% - 12px) 100%,0 100%)}
 .co small{font-weight:700}
 .co b{font-family:var(--disp);font-weight:900;font-size:1.9rem;letter-spacing:.02em;padding-right:10px}
-.ctl{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:6px}
+.ctl button.on{background:var(--green);border-color:var(--green);color:var(--ink)}
 .ctl button{background:var(--band);border:1px solid var(--line);border-radius:4px;padding:12px 0;font-weight:700}
 
 /* Clavier */
@@ -268,7 +269,7 @@ function authErr(e){const m=(e&&e.message)||'';
 
 // ---------- Écrans d'accueil ----------
 const brand=()=>`<header class="brand"><canvas id="logo" width="112" height="112" aria-hidden="true"></canvas><div class="disp">Score <span>Fléchettes</span></div></header>`;
-function home(v){if(v)view=v;screen='home';mult=1;live='idle';pushState();
+function home(v){if(v)view=v;screen='home';mult=1;live='idle';voiceStop();pushState();
   const tabs=[['match','Match'],['train','Entraînement'],['stats','Stats'],['compte',user?'Mon compte':'Compte']];
   app.innerHTML=brand()+`<nav class="tabs">${tabs.map(([id,l])=>`<button class="${view==id||(view=='privacy'&&id=='compte')?'on':''}" data-view="${id}">${l}</button>`).join('')}</nav><div id="pane"></div>`;
   drawLogo();app.onclick=e=>{const t=e.target.closest('[data-view]');if(t){err='';home(t.dataset.view)}};
@@ -503,13 +504,44 @@ function inputHTML(nums,act){
     ?`<div class="pad"><button class="k mod ${mult==2?'on':''}" data-m="2">Double</button><button class="k mod ${mult==3?'on':''}" data-m="3">Triple</button>${nums.map(n=>`<button class="k ${act&&act.length<3&&act.includes(n)?'aim':''}" data-k="${n}">${n}</button>`).join('')}<button class="k bull" data-k="25">25</button><button class="k bull2" data-k="50">Bull</button></div>`
     :'<canvas class="board" id="bd" aria-label="Cible : touche l’endroit où la fléchette est plantée"></canvas>';
 }
-function bindInput(onThrow,rerender,extra){
+// ---------- Saisie à la voix (réservée aux comptes) : « score double 7 » ----------
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null,recOn=false,curThrow=null,curRender=null,heard='';
+const voiceOK=()=>!!(SR&&sb&&user&&!isScreen&&!ro);
+const NUMW={zero:0,un:1,une:1,deux:2,trois:3,quatre:4,cinq:5,six:6,sept:7,huit:8,neuf:9,dix:10,onze:11,douze:12,treize:13,quatorze:14,quinze:15,seize:16,'dix-sept':17,'dix-huit':18,'dix-neuf':19,vingt:20,'vingt-cinq':25,cinquante:50};
+function parseVoice(t){
+  t=t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');const i=t.lastIndexOf('score');if(i<0)return null;
+  const rest=t.slice(i+5).replace(/[,.;:!?]/g,' ').replace(/dix (sept|huit|neuf)/g,'dix-$1').replace(/vingt (et )?cinq/g,'vingt-cinq');
+  const out={darts:[],cmd:null};let m=1;
+  for(const w of rest.split(/\s+/).filter(Boolean)){
+    let x=/^([dt])(\d{1,2})$/.exec(w);if(x){const n=+x[2];if(n>=1&&n<=20)out.darts.push([n,x[1]=='d'?2:3]);m=1;continue}
+    if(/^(double|doubles|d)$/.test(w)){m=2;continue}if(/^(triple|triples|t)$/.test(w)){m=3;continue}if(w=='simple'){m=1;continue}
+    if(/^suivant/.test(w)){out.cmd='next';continue}if(/^annul/.test(w)){out.cmd='undo';continue}
+    if(/^(rate|ratee|dehors|out|zero|0|manque)$/.test(w)){out.darts.push([0,1]);m=1;continue}
+    if(/^(bull|bulle|centre|50|cinquante)$/.test(w)){out.darts.push([50,1]);m=1;continue}
+    const n=/^\d+$/.test(w)?+w:NUMW[w];
+    if(n==25){out.darts.push([25,1]);m=1}else if(n>=1&&n<=20){out.darts.push([n,m]);m=1}}
+  return out.darts.length||out.cmd?out:null}
+function onVoice(t){if(screen!='game'||!curThrow)return;const r=parseVoice(t);if(!r)return;heard=t.trim();
+  if(r.cmd=='undo'){const b=$('undo');if(b)b.click();return}
+  for(const[v,m]of r.darts)curThrow(v,m);
+  if(r.cmd=='next'){const b=$('next');if(b)b.click()}else if(!r.darts.length&&curRender)curRender()}
+function voiceStart(){if(!SR||recOn)return;try{rec=new SR();rec.lang='fr-FR';rec.continuous=true;rec.interimResults=false;
+  rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)onVoice(e.results[i][0].transcript)};
+  rec.onerror=e=>{if(e.error=='not-allowed'||e.error=='service-not-allowed'){cfg.voice=false;save();voiceStop();msg='Micro refusé : autorise le micro pour scoreflechettes.fr dans les réglages du navigateur.';if(curRender&&screen=='game')curRender()}};
+  rec.onend=()=>{if(recOn)setTimeout(()=>{try{recOn&&rec&&rec.start()}catch(e){}},250)};recOn=true;rec.start()}catch(e){recOn=false}}
+function voiceStop(){recOn=false;try{rec&&rec.stop()}catch(e){}rec=null}
+const micBtn=()=>voiceOK()?`<button id="mic" class="${cfg.voice?'on':''}" aria-pressed="${!!cfg.voice}">${cfg.voice?'Micro activé':'Micro'}</button>`:'';
+const micHint=()=>voiceOK()&&cfg.voice?`<div class="hint">Dis « score » puis la fléchette : « score double 7 », « score 20 », « score bull », « score raté ». « Score suivant » pour passer, « score annuler » pour corriger.${heard?'<br>Entendu : « '+esc(heard)+' »':''}</div>`:'';
+function bindInput(onThrow,rerender,extra){curThrow=onThrow;curRender=rerender;
+  if(cfg.voice&&voiceOK())voiceStart();else voiceStop();
   const bd=$('bd');if(bd){drawBoard(bd);bd.onpointerdown=e=>{e.preventDefault();const h=hit(bd,e);if(h)onThrow(h.v,h.m,h.x,h.y)}}
   app.onclick=e=>{const t=e.target.closest('button');if(!t)return;const d=t.dataset;
     if(d.k){const v=+d.k,m=v>20?1:mult;mult=1;onThrow(v,m)}
     else if(d.m){mult=mult==+d.m?1:+d.m;rerender()}
     else if(t.id=='miss')onThrow(0,1)
     else if(t.id=='inp'){cfg.input=cfg.input=='clavier'?'cible':'clavier';save();rerender()}
+    else if(t.id=='mic'){cfg.voice=!cfg.voice;heard='';save();rerender()}
     else extra(t.id)};
 }
 const lab=(v,m)=>v==0?'0':v==50?'Bull':v==25?'25':(m==3?'T':m==2?'D':'')+v;
@@ -548,7 +580,7 @@ function game(){
   ${co?`<div class="co"><small>Finish conseillé</small><b>${co}</b></div>`:''}
   <div class="msg">${msg}</div>
   ${S.wait?(RO?`<div class="co"><small>Volée</small><b>${vol}</b></div>`:`<button class="go" id="next">Volée ${vol} · Joueur suivant</button>`):''}
-  ${RO?'':`<div class="ctl"><button id="miss">Raté</button><button id="undo">Annuler</button><button id="inp">${cfg.input=='clavier'?'Cible':'Clavier'}</button><button id="menu">Menu</button></div>`}
+  ${RO?'':`<div class="ctl"><button id="miss">Raté</button><button id="undo">Annuler</button><button id="inp">${cfg.input=='clavier'?'Cible':'Clavier'}</button>${micBtn()}<button id="menu">Menu</button></div>${micHint()}`}
   </div></div>`;
   if(RO){const b=$('bd');if(b)drawBoard(b);app.onclick=null;return}
   bindInput(throwDart,game,id=>{if(id=='next')confirmTurn();else if(id=='undo')undo();else if(id=='menu')home('match')});
@@ -613,7 +645,7 @@ function statsTableOf(pl,cr,ct){
 }
 function statsTable(){const w=S.sides[S.winner].members;
   return statsTableOf(S.order.map(n=>({...S.ps[n],name:n,won:w.includes(n)})),S.mode!='x01',S.ct)}
-function winScreen(){
+function winScreen(){voiceStop();
   const w=S.sides[S.winner],cr=S.mode!='x01';
   app.innerHTML=`<div class="win"><div class="banner"><small>${cr?(S.mode=='wild'?'Wildcard':'Cricket'):S.start} · vainqueur</small><div class="disp">${esc(w.name)}</div>
   ${w.members.length>1?`<small>${w.members.map(esc).join(', ')}</small>`:''}</div>
@@ -702,7 +734,7 @@ function tGame(){
   ${co?`<div class="co"><small>Finish conseillé</small><b>${co}</b></div>`:''}
   <div class="msg">${msg}</div>
   ${T.wait&&!RO?'<button class="go" id="next">Volée suivante</button>':''}
-  ${RO?'':`<div class="ctl"><button id="miss">Raté</button><button id="undo">Annuler</button><button id="inp">${cfg.input=='clavier'?'Cible':'Clavier'}</button><button id="quit">Arrêter</button></div>`}
+  ${RO?'':`<div class="ctl"><button id="miss">Raté</button><button id="undo">Annuler</button><button id="inp">${cfg.input=='clavier'?'Cible':'Clavier'}</button>${micBtn()}<button id="quit">Arrêter</button></div>${micHint()}`}
   </div></div>`;
   if(RO){const b=$('bd');if(b)drawBoard(b);app.onclick=null;return}
   bindInput(tThrow,tGame,id=>{if(id=='next')tConfirm();else if(id=='undo')tUndo();else if(id=='quit'){T=null;save();home('train')}});
@@ -722,7 +754,7 @@ function tConfirm(){
 function tFinish(){const D=DRILLS[T.drill];T.done=true;T.wait=false;T.score=D.score(T.st,T);T.prev=bestDrill(T.name,T.drill);
   T.gid=T.pid?addGame('drill',{drill:T.drill,pid:T.pid,name:T.name,score:T.score,darts:T.darts}):null}
 function tUndo(){if(!hist.length)return;const gid=T.gid;T=JSON.parse(hist.pop());if(gid&&T.gid!==gid)removeGame(gid);msg='';save();tGame()}
-function tResult(){
+function tResult(){voiceStop();
   const D=DRILLS[T.drill],rec=T.pid&&(T.prev==null||(D.better=='low'?T.score<T.prev:T.score>T.prev));
   app.innerHTML=`<div class="win"><div class="banner"><small>${D.name} · ${esc(T.name)}</small><div class="disp">${D.fmt(T.score)}</div>${rec?'<small>Nouveau record !</small>':''}</div>
   ${T.pid?(T.prev!=null?`<div class="hint">Record précédent : ${D.fmt(T.prev)}</div>`:''):'<div class="hint">Joueur invité : ce résultat n’est pas enregistré.</div>'}
