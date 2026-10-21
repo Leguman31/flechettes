@@ -124,6 +124,9 @@ a{color:var(--hl)}
 .k.mod.on{background:var(--hl);color:var(--ink);border-color:var(--hl)}
 .k.bull{background:#1f6b45;border-color:#1f6b45}.k.bull2{background:#9e2730;border-color:#9e2730}
 .k.aim{border-color:var(--hl);color:var(--hl)}
+.pad.tot{grid-template-columns:repeat(3,1fr)!important}
+.tot-d{grid-column:1/-1;font-family:var(--disp);font-size:4rem;font-weight:900;text-align:right;background:var(--band2);padding:4px 16px;border-radius:4px;color:var(--hl);font-variant-numeric:tabular-nums}
+.tot-q{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin:0}
 
 .board{display:block;width:100%;max-width:calc(100vh - 40px);max-width:calc(100dvh - 40px);aspect-ratio:1;justify-self:center;cursor:crosshair}
 
@@ -251,6 +254,8 @@ html.tv{font-size:clamp(16px,1.45vw,30px)}
 const $=id=>document.getElementById(id),app=$('app'),KEY='darts2',DBK='darts-db',TEAM='ABCD',PI=Math.PI;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmt=n=>n.toFixed(1).replace('.',',');
+const isCr=m=>m=='cricket'||m=='wild';
+const GT=301; // objectif du Gotcha
 const avg=o=>o.darts?fmt(o.total/o.darts*3):'–';
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const uuid=()=>crypto.randomUUID?crypto.randomUUID():'10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^Math.random()*16>>c/4).toString(16));
@@ -395,14 +400,14 @@ function joinLeave(kicked){if(joined&&!kicked&&chan&&user)try{chan.send({type:'b
   try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}if(cfg.room)phoneLink();home('match')}
 // Écran (Raspberry) : on tape le code de la partie
 // ---------- Écran sous la cible : tableau façon retransmission ----------
-function tvRem(s){const x=s.sides[s.cur],sum=s.turn.reduce((a,d)=>a+d.val,0);return s.wait=='bust'?x.score:x.score-sum}
+function tvRem(s){const x=s.sides[s.cur],sum=s.turn.reduce((a,d)=>a+d.val,0);return s.wait=='bust'?x.score:s.mode=='gotcha'?x.score+sum:x.score-sum}
 function tvFlash(t,k){const d=document.createElement('div');d.className='tv-flash '+k;d.innerHTML='<b>'+t+'</b>';document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
 function tvMatch(s,prev){S=s;live='match';screen='game';const same=prev&&prev.mid&&prev.mid==s.mid;
   if(s.winner!=null){if(same&&prev.winner==null)tvFlash('Game shot','win');game();return}
-  const cr=s.mode!='x01',side=s.sides[s.cur],who=side.members[side.mi%side.members.length];
-  const sum=s.turn.reduce((a,d)=>a+d.val,0),rem=tvRem(s),co=!cr&&!s.wait?checkout(rem,3-s.turn.length,s.dout):'';
-  const title=cr?(s.mode=='wild'?'Wildcard':'Cricket'):s.start;
-  const rules=[!cr&&s.dout?'Double out':'',s.ct?'Cut throat : le plus bas gagne':'',s.bull50?'Bull unique':'',s.sides.some(x=>x.members.length>1)?'Équipes':''].filter(Boolean).join(' · ');
+  const cr=isCr(s.mode),side=s.sides[s.cur],who=side.members[side.mi%side.members.length];
+  const sum=s.turn.reduce((a,d)=>a+d.val,0),rem=tvRem(s),co=cr||s.wait?'':s.mode=='gotcha'?checkout(s.gt-rem,3-s.turn.length,false):checkout(rem,3-s.turn.length,s.dout);
+  const title=cr?(s.mode=='wild'?'Wildcard':'Cricket'):s.mode=='gotcha'?'Gotcha':s.start;
+  const rules=[s.mode=='x01'&&s.dout?'Double out':'',s.mode=='gotcha'?'Objectif '+s.gt:'',s.ct?'Cut throat : le plus bas gagne':'',s.bull50?'Bull unique':'',s.sides.some(x=>x.members.length>1)?'Équipes':''].filter(Boolean).join(' · ');
   const darts=`<div class="tv-darts">${[0,1,2].map(i=>{const d=s.turn[i];return `<div class="tv-dart ${d?'f':''}">${d?d.l:''}</div>`}).join('')}</div>`;
   let body;
   if(cr){const mk=n=>['','/','✕','<span class="m3">✕</span>'][Math.min(n||0,3)],c=i=>i==s.cur?'cur':'';
@@ -418,6 +423,7 @@ function tvMatch(s,prev){S=s;live='match';screen='game';const same=prev&&prev.mi
   const el=$('tvs'),old=same&&prev.cur==s.cur&&!cr?tvRem(prev):null;
   if(el&&old!=null&&old!==rem&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)){
     const t0=performance.now(),D=500,f=t=>{const k=Math.min(1,(t-t0)/D);el.textContent=Math.round(old+(rem-old)*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f)}
+  if(same&&(s.gc||0)>(prev.gc||0))tvFlash('Gotcha','ton');
   if(same&&!prev.wait&&s.wait){if(s.wait=='bust')tvFlash('Bust','bust');else if(!cr&&sum==180)tvFlash('180','max');else if(!cr&&sum>=100)tvFlash(sum,'ton')}
 }
 function screenMain(){let code='';
@@ -452,7 +458,7 @@ const datalist=()=>`<datalist id="pl-list">${names().map(n=>`<option value="${es
 
 // ---------- Match : réglages ----------
 const MODES=[['301','301','Partie courte'],['501','501','Le classique des pros'],['701','701','Partie longue, idéale à plusieurs'],
-  ['cricket','Cricket','Fermer du 15 au 20 et le bull'],['wild','Wildcard','Cricket avec des numéros tirés au sort qui changent']];
+  ['cricket','Cricket','Fermer du 15 au 20 et le bull'],['gotcha','Gotcha','Monte pile à 301 et renvoie à zéro l’adversaire dont tu atteins le score'],['wild','Wildcard','Cricket avec des numéros tirés au sort qui changent']];
 const opt=(id,on,t,d)=>`<button class="opt" role="switch" aria-checked="${on}" data-opt="${id}"><span><b>${t}</b><small>${d}</small></span><i class="sw"></i></button>`;
 let inv=false;
 function setup(){
@@ -463,7 +469,7 @@ function setup(){
   <div class="modes">${MODES.map(([id,l,d])=>`<button class="mode ${cur==id?'on':''}" data-mode="${id}"><b>${l}</b><small>${d}</small></button>`).join('')}</div>
   <h2>Règles</h2>
   <div class="opts">
-  ${x?opt('dout',cfg.dout,'Finir sur un double','Le dernier lancer doit être un double ou le bull'):opt('ct',!!cfg.ct,'Cut throat','Tes points vont aux adversaires, le plus bas gagne')}
+  ${x?opt('dout',cfg.dout,'Finir sur un double','Le dernier lancer doit être un double ou le bull'):isCr(cfg.mode)?opt('ct',!!cfg.ct,'Cut throat','Tes points vont aux adversaires, le plus bas gagne'):''}
   ${opt('bull',!cfg.bull50,'Double bull',cfg.bull50?'Tout le bull vaut 50':'25 pour l’anneau, 50 pour le centre')}
   ${opt('teams',cfg.teams,'Jouer en équipes','Les coéquipiers partagent le score')}
   ${opt('rnd',cfg.random,'Ordre aléatoire','L’ordre est tiré au sort au lancement')}
@@ -521,8 +527,8 @@ function startGame(){
   if(cfg.mode=='wild')nums=shuffle([...Array(20)].map((_,i)=>i+1)).slice(0,6).sort((a,b)=>b-a);
   if(cfg.mode!='x01')nums.push(25);
   const ps={};P.forEach(p=>ps[p.n]={pid:p.uid?null:pidFor(p.n),uid:p.uid||null,darts:0,total:0,best:0,t100:0,t140:0,t180:0,co:0,pts:0});
-  S={mode:cfg.mode,start:cfg.start,dout:cfg.dout,bull50:cfg.bull50,ct:!!cfg.ct&&cfg.mode!='x01',nums,cur:0,round:1,turn:[],wait:false,winner:null,ps,order:P.map(p=>p.n),gid:null,mid:uuid(),
-    sides:sides.map(s=>({...s,mi:0,score:cfg.start,pts:0,marks:{},darts:0,total:0,last:''}))};
+  S={mode:cfg.mode,start:cfg.start,dout:cfg.dout,bull50:cfg.bull50,ct:!!cfg.ct&&isCr(cfg.mode),gt:GT,gc:0,nums,cur:0,round:1,turn:[],wait:false,winner:null,ps,order:P.map(p=>p.n),gid:null,mid:uuid(),
+    sides:sides.map(s=>({...s,mi:0,score:cfg.mode=='gotcha'?0:cfg.start,pts:0,marks:{},darts:0,total:0,last:''}))};
   hist.length=0;mult=1;msg='';phoneLink();save();game();return true;
 }
 const thrower=()=>{const s=S.sides[S.cur];return s.members[s.mi%s.members.length]};
@@ -582,8 +588,15 @@ function hit(cv,e){
 const redraw=()=>{const b=$('bd');if(b)drawBoard(b);drawLogo()};
 addEventListener('resize',redraw);try{document.fonts.ready.then(redraw)}catch(e){}
 // Saisie commune : clavier ou cible
-function inputHTML(nums,act){
-  return cfg.input=='clavier'
+let inpModes=['cible','clavier'],tot='',finAsk=null;
+const INP_L={cible:'Cible',clavier:'Clavier',total:'Total'};
+const inpNext=()=>{const c=inpModes.includes(cfg.input)?cfg.input:'clavier';return INP_L[inpModes[(inpModes.indexOf(c)+1)%inpModes.length]]};
+function inputHTML(nums,act){const md=inpModes.includes(cfg.input)?cfg.input:'clavier';
+  if(md=='total'){
+    if(finAsk!=null)return `<div class="pad tot"><div class="tot-d">${finAsk}</div><p class="hint tot-q">Fini en combien de fléchettes ?</p><button class="k" data-fin="1">1</button><button class="k" data-fin="2">2</button><button class="k" data-fin="3">3</button><button class="k ctl tot-q" data-fin="0">Retour</button></div>`;
+    return `<div class="pad tot"><div class="tot-d">${tot||'0'}</div>${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="k" data-tk="${n}">${n}</button>`).join('')}<button class="k ctl" data-tk="del" aria-label="Effacer">⌫</button><button class="k" data-tk="0">0</button><button class="k bull" data-tk="ok">OK</button>
+    <div class="tot-q">${[26,41,45,60,81,85,100,140,180].map(q=>`<button class="chip" data-tq="${q}">${q}</button>`).join('')}</div></div>`}
+  return md=='clavier'
     ?`<div class="pad"><button class="k mod ${mult==2?'on':''}" data-m="2">Double</button><button class="k mod ${mult==3?'on':''}" data-m="3">Triple</button>${nums.map(n=>`<button class="k ${act&&act.length<3&&act.includes(n)?'aim':''}" data-k="${n}">${n}</button>`).join('')}<button class="k bull" data-k="25">25</button><button class="k bull2" data-k="50">Bull</button></div>`
     :'<canvas class="board" id="bd" aria-label="Cible : touche l’endroit où la fléchette est plantée"></canvas>';
 }
@@ -625,7 +638,10 @@ function bindInput(onThrow,rerender,extra){curThrow=onThrow;curRender=rerender;
     if(d.k){const v=+d.k,m=v>20?1:mult;mult=1;onThrow(v,m)}
     else if(d.m){mult=mult==+d.m?1:+d.m;rerender()}
     else if(t.id=='miss')onThrow(0,1)
-    else if(t.id=='inp'){cfg.input=cfg.input=='clavier'?'cible':'clavier';save();rerender()}
+    else if(d.tk){if(d.tk=='del')tot=tot.slice(0,-1);else if(d.tk=='ok')return submitTotal();else if(tot.length<3)tot=(tot=='0'?'':tot)+d.tk;rerender()}
+    else if(d.tq){tot=d.tq;submitTotal()}
+    else if(d.fin){const v=finAsk;finAsk=null;if(+d.fin)enterTotal(v,+d.fin);else rerender()}
+    else if(t.id=='inp'){const c=inpModes.includes(cfg.input)?cfg.input:'clavier';cfg.input=inpModes[(inpModes.indexOf(c)+1)%inpModes.length];tot='';finAsk=null;save();rerender()}
     else if(t.id=='mic'){cfg.voice=!cfg.voice;heard='';save();rerender()}
     else extra(t.id)};
 }
@@ -650,11 +666,12 @@ function scoreBars(rem){
 // ---------- Match : partie ----------
 function game(){
   screen='game';live='match';const RO=isScreen||ro;if(S.winner!=null){winScreen();return pushState()}
-  const s=S.sides[S.cur],who=thrower(),cr=S.mode!='x01',left=3-S.turn.length;
-  const sum=S.turn.reduce((a,d)=>a+d.val,0),rem=S.wait=='bust'?s.score:s.score-sum;
-  const co=!cr&&!S.wait?checkout(rem,left,S.dout):'';
-  const title=cr?(S.mode=='wild'?'Wildcard':'Cricket'):S.start;
-  const tags=[!cr&&S.dout?'Double out':'',S.ct?'Cut throat : le plus bas gagne':'',S.bull50?'Bull unique':'',S.sides.some(x=>x.members.length>1)?'Équipes':'',].filter(Boolean);if(!RO&&cfg.room&&sb)tags.unshift('<b>Code écran '+cfg.room+'</b>');
+  const s=S.sides[S.cur],who=thrower(),cr=isCr(S.mode),gt=S.mode=='gotcha',left=3-S.turn.length;
+  const sum=S.turn.reduce((a,d)=>a+d.val,0),rem=S.wait=='bust'?s.score:gt?s.score+sum:s.score-sum;
+  const co=cr||S.wait?'':gt?checkout(S.gt-rem,left,false):checkout(rem,left,S.dout);
+  inpModes=cr?['cible','clavier']:['cible','clavier','total'];
+  const title=cr?(S.mode=='wild'?'Wildcard':'Cricket'):gt?'Gotcha':S.start;
+  const tags=[S.mode=='x01'&&S.dout?'Double out':'',S.ct?'Cut throat : le plus bas gagne':'',S.bull50?'Bull unique':'',S.sides.some(x=>x.members.length>1)?'Équipes':'',].filter(Boolean);if(!RO&&cfg.room&&sb)tags.unshift('<b>Code écran '+cfg.room+'</b>');
   const nums=cr?S.nums.filter(n=>n<25):[...Array(20)].map((_,i)=>i+1);
   BD={act:cr?S.nums:null,turn:S.turn};
   const vol=S.wait=='bust'?'Bust':cr?sum+(sum>1?' marques':' marque'):sum;
@@ -662,10 +679,10 @@ function game(){
   <div class="top"><div><div class="disp">${title}</div>${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag ${t[0]=='<'?'hl':''}">${t}</span>`).join('')}</div>`:''}</div><div class="round">Tour ${S.round}</div></div>
   ${cr?crTable():scoreBars(rem)}
   <div class="turn"><span class="who">${esc(who)}${s.members.length>1?` <small>${esc(s.name)}</small>`:''}</span>${[0,1,2].map(i=>`<div class="dart ${S.turn[i]?'f':''}">${S.turn[i]?S.turn[i].l:'·'}</div>`).join('')}</div>
-  ${co?`<div class="co"><small>Finish conseillé</small><b>${co}</b></div>`:''}
+  ${co?`<div class="co"><small>${gt?'Pour finir à '+S.gt:'Finish conseillé'}</small><b>${co}</b></div>`:''}
   <div class="msg">${msg}</div>
   ${S.wait?(RO?`<div class="co"><small>Volée</small><b>${vol}</b></div>`:`<button class="go" id="next">Volée ${vol} · Joueur suivant</button>`):''}
-  ${RO?'':`<div class="ctl"><button id="miss">Raté</button><button id="undo">Annuler</button><button id="inp">${cfg.input=='clavier'?'Cible':'Clavier'}</button>${micBtn()}<button id="menu">Menu</button></div>${micHint()}`}
+  ${RO?'':`<div class="ctl"><button id="miss">Raté</button><button id="undo">Annuler</button><button id="inp">${inpNext()}</button>${micBtn()}<button id="menu">Menu</button></div>${micHint()}`}
   </div></div>`;
   if(RO){const b=$('bd');if(b)drawBoard(b);app.onclick=null;return}
   bindInput(throwDart,game,id=>{if(id=='next')confirmTurn();else if(id=='undo')undo();else if(id=='menu')home('match')});
@@ -683,6 +700,8 @@ function throwDart(v,m,x,y){
     if(rest<0||(S.dout&&rest==1)||(rest==0&&S.dout&&!isD)){S.wait='bust';msg='Bust : le score reste à '+s.score}
     else if(rest==0){s.darts+=S.turn.length;s.total+=tot;s.score=0;s.last=tot;volee(p,S.turn.length,tot,true);S.winner=S.cur;S.turn=[]}
     else if(S.turn.length==3)S.wait='ok';
+  }else if(S.mode=='gotcha'){
+    S.turn.push({val:v*m,x,y,l});const tot=S.turn.reduce((a,d)=>a+d.val,0);gotchaStep(s,p,tot,S.turn.length);
   }else{
     const n=v==50?25:v,mk=v==50?2:v==25?1:m;let got=0;
     if(v&&S.nums.includes(n)){
@@ -699,6 +718,26 @@ function throwDart(v,m,x,y){
   if(S.winner!=null)recordMatch();
   save();game();
 }
+// Gotcha : dépasser 301 = bust ; tomber pile sur le score d'un adversaire le renvoie à 0
+function gotchaStep(s,p,tot,nd,last){const run=s.score+tot;
+  if(run>S.gt){S.wait='bust';msg='Bust : '+run+' dépasse '+S.gt+', le score reste à '+s.score;return}
+  S.sides.forEach(o=>{if(o!==s&&o.score>0&&o.score==run){o.score=0;S.gc=(S.gc||0)+1;p.got=(p.got||0)+1;msg='Gotcha ! '+o.name+' retombe à 0'}});
+  if(run==S.gt){s.darts+=nd;s.total+=tot;s.score=S.gt;s.last=tot;volee(p,nd,tot,true);S.winner=S.cur;S.turn=[]}
+  else if(last||S.turn.length>=3)S.wait='ok'}
+// Saisie du total de la volée (301/501/701 et Gotcha)
+function enterTotal(v,nd){if(S.wait||S.winner!=null)return;hist.push(JSON.stringify(S));msg='';
+  const s=S.sides[S.cur],p=pst();S.turn=[{val:v,l:String(v),n:nd}];
+  if(S.mode=='gotcha')gotchaStep(s,p,v,nd,true);
+  else{const rest=s.score-v;
+    if(rest<0||(S.dout&&rest==1)){S.wait='bust';msg='Bust : le score reste à '+s.score}
+    else if(rest==0){s.darts+=nd;s.total+=v;s.score=0;s.last=v;volee(p,nd,v,true);S.winner=S.cur;S.turn=[]}
+    else S.wait='ok'}
+  if(S.winner!=null)recordMatch();save();game()}
+function submitTotal(){if(!tot)return;const v=+tot;tot='';const s=S.sides[S.cur];
+  if(S.turn.length){msg='Termine d’abord la volée en cours, ou annule ses fléchettes.';return game()}
+  if(v>180||[163,166,169,172,173,175,176,178,179].includes(v)){msg=v+' est impossible en 3 fléchettes.';return game()}
+  const fin=S.mode=='gotcha'?s.score+v==S.gt:s.score==v;
+  if(fin){finAsk=v;return game()}enterTotal(v,3)}
 function recordMatch(){
   if(S.order.every(n=>!S.ps[n].pid))return;const w=S.sides[S.winner].members;
   S.gid=addGame('match',{mode:S.mode,start:S.start,ct:S.ct,dout:S.dout,teams:S.sides.some(s=>s.members.length>1),
@@ -706,8 +745,9 @@ function recordMatch(){
 }
 function confirmTurn(){
   hist.push(JSON.stringify(S));const s=S.sides[S.cur],p=pst(),tot=S.turn.reduce((a,d)=>a+d.val,0);
-  if(S.mode=='x01'){s.darts+=S.turn.length;
-    if(S.wait=='bust'){s.last='Bust';volee(p,S.turn.length,0,false)}else{s.total+=tot;s.score-=tot;s.last=tot;volee(p,S.turn.length,tot,false)}}
+  const nd=S.turn.reduce((a,d)=>a+(d.n||1),0);
+  if(!isCr(S.mode)){s.darts+=nd;
+    if(S.wait=='bust'){s.last='Bust';volee(p,nd,0,false)}else{s.total+=tot;s.score+=S.mode=='gotcha'?tot:-tot;s.last=tot;volee(p,nd,tot,false)}}
   else{s.last=tot;p.best=Math.max(p.best,tot)}
   s.mi++;S.wait=false;msg='';S.turn=[];S.cur=(S.cur+1)%S.sides.length;if(S.cur==0){S.round++;if(S.mode=='wild')reroll()}
   save();game();
@@ -729,10 +769,10 @@ function statsTableOf(pl,cr,ct){
   <tbody>${rows.map(([l,f])=>`<tr><th>${l}</th>${pl.map(p=>`<td class="${p.won?'w':''}">${f(p)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
 function statsTable(){const w=S.sides[S.winner].members;
-  return statsTableOf(S.order.map(n=>({...S.ps[n],name:n,won:w.includes(n)})),S.mode!='x01',S.ct)}
+  return statsTableOf(S.order.map(n=>({...S.ps[n],name:n,won:w.includes(n)})),isCr(S.mode),S.ct)}
 function winScreen(){voiceStop();
-  const w=S.sides[S.winner],cr=S.mode!='x01';
-  app.innerHTML=`<div class="win"><div class="banner"><small>${cr?(S.mode=='wild'?'Wildcard':'Cricket'):S.start} · vainqueur</small><div class="disp">${esc(w.name)}</div>
+  const w=S.sides[S.winner],cr=isCr(S.mode);
+  app.innerHTML=`<div class="win"><div class="banner"><small>${cr?(S.mode=='wild'?'Wildcard':'Cricket'):S.mode=='gotcha'?'Gotcha':S.start} · vainqueur</small><div class="disp">${esc(w.name)}</div>
   ${w.members.length>1?`<small>${w.members.map(esc).join(', ')}</small>`:''}</div>
   <h2>Statistiques des joueurs</h2>${statsTable()}
   ${cr?`<h2>Tableau final</h2>${crTable()}`:''}
@@ -811,7 +851,7 @@ function tStart(n){const D=DRILLS[cfg.drill];T={drill:cfg.drill,name:n,pid:pidFo
   hist.length=0;msg='';mult=1;phoneLink();save();tGame()}
 function tGame(){
   screen='game';live='drill';const RO=isScreen||ro;if(T.done){tResult();return pushState()}
-  const D=DRILLS[T.drill],st=T.st,vw=D.view(st,T),co=!T.wait&&D.co?D.co(st,T):'',act=D.act(st);
+  const D=DRILLS[T.drill],st=T.st,vw=D.view(st,T),co=!T.wait&&D.co?D.co(st,T):'',act=D.act(st);inpModes=['cible','clavier'];
   BD={act,turn:T.turn};
   app.innerHTML=`<div class="game">${RO?'<canvas class="board" id="bd"></canvas>':inputHTML([...Array(20)].map((_,i)=>i+1),act)}<div class="side">
   <div class="top"><div><div class="disp">${D.name}</div><div class="tags"><span class="tag">${esc(T.name)}</span><span class="tag">Entraînement</span>${!RO&&cfg.room&&sb?`<span class="tag hl"><b>Code écran ${cfg.room}</b></span>`:''}</div></div><div class="round">${T.darts} fl.</div></div>
@@ -820,7 +860,7 @@ function tGame(){
   ${co?`<div class="co"><small>Finish conseillé</small><b>${co}</b></div>`:''}
   <div class="msg">${msg}</div>
   ${T.wait&&!RO?'<button class="go" id="next">Volée suivante</button>':''}
-  ${RO?'':`<div class="ctl"><button id="miss">Raté</button><button id="undo">Annuler</button><button id="inp">${cfg.input=='clavier'?'Cible':'Clavier'}</button>${micBtn()}<button id="quit">Arrêter</button></div>${micHint()}`}
+  ${RO?'':`<div class="ctl"><button id="miss">Raté</button><button id="undo">Annuler</button><button id="inp">${inpNext()}</button>${micBtn()}<button id="quit">Arrêter</button></div>${micHint()}`}
   </div></div>`;
   if(RO){const b=$('bd');if(b)drawBoard(b);app.onclick=null;return}
   bindInput(tThrow,tGame,id=>{if(id=='next')tConfirm();else if(id=='undo')tUndo();else if(id=='quit'){T=null;save();home('train')}});
@@ -852,7 +892,7 @@ function tResult(){voiceStop();
 
 // ---------- Stats ----------
 const modeKey=d=>d.mode=='x01'?String(d.start):d.mode;
-const MODE_NAMES={'301':'301','501':'501','701':'701',cricket:'Cricket',wild:'Wildcard'};
+const MODE_NAMES={'301':'301','501':'501','701':'701',cricket:'Cricket',wild:'Wildcard',gotcha:'Gotcha'};
 const modeLabel=d=>MODE_NAMES[modeKey(d)]+(d.ct?' cut throat':'')+(d.teams?' en équipe':'');
 const dtFr=s=>new Date(s).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
 function statsFor(name){
@@ -878,7 +918,7 @@ function statsView(){
     ${!user?'<p class="hint">Avec un compte, tes stats sont aussi sauvegardées en ligne. Va dans l’onglet Compte.</p>':''}`;return}
   if(!all.some(n=>lc(n)==lc(cfg.statName)))cfg.statName=all[0];
   const n=cfg.statName,r=statsFor(n),k=(v,l,h)=>`<div class="kpi ${h?'hl':''}"><b>${v}</b><small>${l}</small></div>`;
-  const order=['301','501','701','cricket','wild'].filter(x=>r.modes[x]);
+  const order=['301','501','701','gotcha','cricket','wild'].filter(x=>r.modes[x]);
   const card=x=>{const o=r.modes[x],cr=x=='cricket'||x=='wild',a=o.d?fmt(o.t/o.d*3):'–';
     return `<button class="mode ${sv.flt==x?'on':''}" data-flt="${x}"><b>${MODE_NAMES[x]}</b>
     <small>${o.n} partie${o.n>1?'s':''} · ${o.w} victoire${o.w>1?'s':''} (${Math.round(o.w/o.n*100)} %)</small>
@@ -919,7 +959,7 @@ function gameDetail(){
   const pane=$('pane'),g=DB.games.find(x=>x.id==sv.gid);
   if(!g){sv.gid=null;return statsView()}
   const d=g.data;let body;
-  if(g.kind=='match'){const cr=d.mode!='x01',win=(d.players||[]).filter(p=>p.won);
+  if(g.kind=='match'){const cr=isCr(d.mode),win=(d.players||[]).filter(p=>p.won);
     const tags=[d.mode=='x01'&&d.dout?'Double out':'',d.ct?'Cut throat':'',d.teams?'Équipes':''].filter(Boolean);
     body=`<div class="banner"><small>${modeLabel(d)} · ${dtFr(g.at)}</small><div class="disp">${win.map(p=>esc(p.name)).join(', ')||'–'}</div><small>vainqueur${win.length>1?'s':''}</small></div>
     ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}
