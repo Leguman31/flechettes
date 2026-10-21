@@ -508,31 +508,33 @@ function inputHTML(nums,act){
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 let rec=null,recOn=false,curThrow=null,curRender=null,heard='';
 const voiceOK=()=>!!(SR&&sb&&user&&!isScreen&&!ro);
-const NUMW={zero:0,un:1,une:1,deux:2,trois:3,quatre:4,cinq:5,six:6,sept:7,huit:8,neuf:9,dix:10,onze:11,douze:12,treize:13,quatorze:14,quinze:15,seize:16,'dix-sept':17,'dix-huit':18,'dix-neuf':19,vingt:20,'vingt-cinq':25,cinquante:50};
+const NUMW={zero:0,un:1,une:1,hein:1,deux:2,trois:3,troie:3,quatre:4,cat:4,cinq:5,saint:5,sein:5,sink:5,six:6,sis:6,scie:6,sept:7,cette:7,set:7,sette:7,huit:8,wit:8,neuf:9,dix:10,dis:10,dit:10,onze:11,douze:12,douce:12,treize:13,quatorze:14,quinze:15,seize:16,'dix-sept':17,'dix-huit':18,'dix-neuf':19,vingt:20,vingts:20,vin:20,vain:20,vint:20,'vingt-cinq':25,cinquante:50};
 function parseVoice(t){
-  t=t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');const i=t.lastIndexOf('score');if(i<0)return null;
-  const rest=t.slice(i+5).replace(/[,.;:!?]/g,' ').replace(/dix (sept|huit|neuf)/g,'dix-$1').replace(/vingt (et )?cinq/g,'vingt-cinq');
+  t=t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[-']/g,' ');
+  const mk=[...t.matchAll(/\b(scores?|scor|skor|scort|scorre|sport)\b/g)].pop();if(!mk)return null;
+  const rest=t.slice(mk.index+mk[0].length).replace(/[,.;:!?]/g,' ').replace(/\b(dix|dis|dit) (sept|cette|set|huit|neuf)\b/g,(a,b,c)=>'dix-'+({cette:'sept',set:'sept'}[c]||c)).replace(/\b(vingt|vin|vain) (et )?(cinq|saint|sein)\b/g,'vingt-cinq').replace(/(\d+)\s*h\b/g,'$1');
   const out={darts:[],cmd:null};let m=1;
   for(const w of rest.split(/\s+/).filter(Boolean)){
     let x=/^([dt])(\d{1,2})$/.exec(w);if(x){const n=+x[2];if(n>=1&&n<=20)out.darts.push([n,x[1]=='d'?2:3]);m=1;continue}
-    if(/^(double|doubles|d)$/.test(w)){m=2;continue}if(/^(triple|triples|t)$/.test(w)){m=3;continue}if(w=='simple'){m=1;continue}
+    if(/^(double|doubles|doubler|doublet|doublee|d)$/.test(w)){m=2;continue}if(/^(triple|triples|tripler|triplee|tripple|t)$/.test(w)){m=3;continue}if(w=='simple'){m=1;continue}
     if(/^suivant/.test(w)){out.cmd='next';continue}if(/^annul/.test(w)){out.cmd='undo';continue}
     if(/^(rate|ratee|dehors|out|zero|0|manque)$/.test(w)){out.darts.push([0,1]);m=1;continue}
-    if(/^(bull|bulle|centre|50|cinquante)$/.test(w)){out.darts.push([50,1]);m=1;continue}
+    if(/^(bull|bulle|boule|bool|bul|bulls|centre|50|cinquante)$/.test(w)){out.darts.push([50,1]);m=1;continue}
     const n=/^\d+$/.test(w)?+w:NUMW[w];
     if(n==25){out.darts.push([25,1]);m=1}else if(n>=1&&n<=20){out.darts.push([n,m]);m=1}}
   return out.darts.length||out.cmd?out:null}
-function onVoice(t){if(screen!='game'||!curThrow)return;const r=parseVoice(t);if(!r)return;heard=t.trim();
+function onVoice(alts){if(screen!='game'||!curThrow)return;let r=null,t=alts[0]||'';for(const a of alts){r=parseVoice(a);if(r){t=a;break}}
+  if(!r){if(/sco|spor|skor/i.test(alts.join(' '))){heard='Pas compris : '+t.trim();if(curRender)curRender()}return}heard=t.trim();
   if(r.cmd=='undo'){const b=$('undo');if(b)b.click();return}
   for(const[v,m]of r.darts)curThrow(v,m);
   if(r.cmd=='next'){const b=$('next');if(b)b.click()}else if(!r.darts.length&&curRender)curRender()}
-function voiceStart(){if(!SR||recOn)return;try{rec=new SR();rec.lang='fr-FR';rec.continuous=true;rec.interimResults=false;
-  rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)onVoice(e.results[i][0].transcript)};
+function voiceStart(){if(!SR||recOn)return;try{rec=new SR();rec.lang='fr-FR';rec.continuous=true;rec.interimResults=false;rec.maxAlternatives=5;
+  rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal){const r=e.results[i],a=[];for(let j=0;j<r.length;j++)a.push(r[j].transcript);onVoice(a)}};
   rec.onerror=e=>{if(e.error=='not-allowed'||e.error=='service-not-allowed'){cfg.voice=false;save();voiceStop();msg='Micro refusé : autorise le micro pour scoreflechettes.fr dans les réglages du navigateur.';if(curRender&&screen=='game')curRender()}};
   rec.onend=()=>{if(recOn)setTimeout(()=>{try{recOn&&rec&&rec.start()}catch(e){}},250)};recOn=true;rec.start()}catch(e){recOn=false}}
 function voiceStop(){recOn=false;try{rec&&rec.stop()}catch(e){}rec=null}
 const micBtn=()=>voiceOK()?`<button id="mic" class="${cfg.voice?'on':''}" aria-pressed="${!!cfg.voice}">${cfg.voice?'Micro activé':'Micro'}</button>`:'';
-const micHint=()=>voiceOK()&&cfg.voice?`<div class="hint">Dis « score » puis la fléchette : « score double 7 », « score 20 », « score bull », « score raté ». « Score suivant » pour passer, « score annuler » pour corriger.${heard?'<br>Entendu : « '+esc(heard)+' »':''}</div>`:'';
+const micHint=()=>voiceOK()&&cfg.voice?`<div class="hint">Dis « score » puis la fléchette : « score double 7 », « score 20 », « score bull », « score raté ». « Score suivant » pour passer, « score annuler » pour corriger.${heard?'<br>'+(heard.startsWith('Pas compris')?esc(heard):'Entendu : « '+esc(heard)+' »'):''}</div>`:'';
 function bindInput(onThrow,rerender,extra){curThrow=onThrow;curRender=rerender;
   if(cfg.voice&&voiceOK())voiceStart();else voiceStop();
   const bd=$('bd');if(bd){drawBoard(bd);bd.onpointerdown=e=>{e.preventDefault();const h=hit(bd,e);if(h)onThrow(h.v,h.m,h.x,h.y)}}
