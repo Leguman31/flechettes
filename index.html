@@ -383,7 +383,7 @@ function setup(){
   const P=cfg.players,x=cfg.mode=='x01',cur=x?String(cfg.start):cfg.mode,pane=$('pane');
   const me=user?myPseudo():'',quick=names().filter(n=>lc(n)!=lc(me)&&!P.some(p=>lc(p.n)==lc(n))).slice(0,12);
   const meChip=me&&!P.some(p=>lc(p.n)==lc(me))?`<button class="chip on" data-addp="${esc(me)}">+ Moi (${esc(me)})</button>`:'';
-  pane.innerHTML=`${sb&&cfg.room?`<div class="row" style="align-items:center"><span class="hint" style="flex:1 1 220px">Code écran du jour : <b style="color:var(--hl)">${cfg.room}</b>. Il change chaque jour.</span><button class="sec" id="newcode" style="flex:0 0 auto">Nouveau code</button></div>`:''}<h2>Jeu</h2>
+  pane.innerHTML=`${sb&&cfg.room&&user&&lc(myPseudo())=='kot2boeuf'?`<div class="row" style="align-items:center"><span class="hint" style="flex:1 1 220px">Code écran du jour : <b style="color:var(--hl)">${cfg.room}</b>. Il change chaque jour.</span><button class="sec" id="newcode" style="flex:0 0 auto">Nouveau code</button></div>`:''}<h2>Jeu</h2>
   <div class="modes">${MODES.map(([id,l,d])=>`<button class="mode ${cur==id?'on':''}" data-mode="${id}"><b>${l}</b><small>${d}</small></button>`).join('')}</div>
   <h2>Règles</h2>
   <div class="opts">
@@ -401,7 +401,7 @@ function setup(){
   ${quick.length||meChip?`<div class="chips">${meChip}${quick.map(n=>`<button class="chip" data-addp="${esc(n)}">+ ${esc(n)}</button>`).join('')}</div>`:''}
   <div class="hint">Chaque joueur nommé garde ses stats. « Joueur 1 », « Joueur 2 »… jouent en invités.${cfg.teams?' Touche la lettre d’un joueur pour changer son équipe.':''}</div>
   <div class="row"><button class="ghost" id="add">+ Ajouter un joueur</button>${sb?`<button class="ghost" id="inv">${inv?'Fermer l’invitation':'+ Ajouter un joueur avec son compte (QR code)'}</button>`:''}</div>
-  ${inv&&sb?`<div class="link"><div class="qr" id="iqr" style="width:min(220px,50vw)"></div><span><b>Scanne avec ton téléphone</b><br><small class="hint">Le joueur scanne ce code, ou tape ${cfg.room} dans l’onglet Compte de son appli. Il se connecte à son compte et apparaît ici : ses stats du match iront dans son compte.</small><br><b class="disp" style="font-size:2.6rem;color:var(--hl)">${cfg.room}</b></span></div>`:''}
+  ${inv&&sb?`<div class="link"><div class="qr" id="iqr" style="width:min(220px,50vw)"></div><span><b>Scanne avec ton téléphone</b><br><small class="hint">Le joueur scanne ce code, ou tape ${cfg.room} dans l’onglet Compte de son appli. Il se connecte à son compte et apparaît ici : ses stats du match iront dans son compte.</small><br><b class="disp" style="font-size:2.6rem;color:var(--hl)">${cfg.room}</b><br><button class="sec" id="newcode" style="margin-top:6px">Nouveau code</button></span></div>`:''}
   ${linkNote?`<div class="good">${esc(linkNote)}</div>`:''}
   <div class="msg">${err}</div>
   <button class="go" id="start">Lancer le match</button>
