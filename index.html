@@ -11,7 +11,7 @@
 --disp:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;--body:Barlow,system-ui,sans-serif;color-scheme:dark}
 html,body{height:100%}
 html,button,.board{touch-action:manipulation}
-body{background:var(--bg);background-image:linear-gradient(180deg,#0d1d3d 0,var(--bg) 320px);color:var(--fg);font-family:var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px;box-sizing:border-box}
+body{margin:0;background:var(--bg);background-image:linear-gradient(180deg,#0d1d3d 0,var(--bg) 320px);color:var(--fg);font-family:var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px;box-sizing:border-box}
 *{box-sizing:border-box}
 button{font:inherit;color:inherit;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 button:focus-visible,input:focus-visible{outline:2px solid var(--hl);outline-offset:2px}
@@ -247,6 +247,70 @@ html.tv{font-size:clamp(16px,1.45vw,30px)}
 .link span{flex:1 1 220px;min-width:0}
 .link input{flex:0 1 110px;text-transform:uppercase;font-family:var(--disp);font-size:1.4rem;font-weight:800;letter-spacing:.1em}
 @media (max-width:760px){.game{grid-template-columns:1fr}.idle{grid-template-columns:1fr}}
+/* ===== Téléphone : l'écran de jeu tient toujours sur une page ===== */
+.act{display:flex;flex-direction:column;gap:6px}
+@media (max-width:760px) and (orientation:portrait){
+  .game{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto minmax(0,1fr) auto;
+    grid-template-areas:"top" "sc" "turn" "act" "in" "ctl";gap:6px;height:calc(100dvh - 24px);align-items:stretch}
+  .game>.side{display:contents}
+  .game .top{grid-area:top}.game .sbs,.game .crt,.game .target{grid-area:sc}.game .turn{grid-area:turn}.game .act{grid-area:act}.game .ctl{grid-area:ctl}
+  .game>.pad,.game>.bwrap,.game>.board{grid-area:in}
+  .game>.board{height:100%;width:auto;max-width:100%;aspect-ratio:1;justify-self:center;min-height:0}
+  .game .side>.hint{display:none}
+  .game .top .disp{font-size:1.7rem}.game .round{font-size:1.05rem}
+  .game .tags{flex-wrap:nowrap;overflow:hidden;max-width:70vw}
+  .game .sbs{max-height:30dvh;overflow:auto}
+  .game .sb{min-height:44px}.game .sb-n{padding:4px 10px}.game .sb-n b{font-size:1rem}.game .sb-n small{font-size:.72rem}.game .sb-s{font-size:2.2rem}
+  .game .crt th,.game .crt td{padding:0 6px;line-height:1.15}.game .crt td{font-size:1.05rem}.game .crt tbody th{font-size:.95rem}.game .crt thead th{font-size:.75rem}.game .crt .mpr{display:none}
+  .game .target b{font-size:2.6rem}.game .target div{padding:6px 26px 8px 12px}
+  .game .dart{min-width:52px;padding:3px 6px;font-size:1.25rem}
+  .game .act{flex-direction:row;align-items:stretch;height:48px;overflow:hidden}
+  .game .act>*{flex:1 1 auto;min-width:0}
+  .game .act .go{font-size:1.15rem;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .game .act .co{padding:4px 12px}.game .act .co b{font-size:1.5rem}
+  .game .act .msg{display:flex;align-items:center;font-size:.85rem;line-height:1.2;overflow:hidden}
+  .game .act .go~.msg,.game .act .co~.msg{display:none}
+  .game .act .msg:empty{display:none}
+  .game>.bwrap{height:100%;width:auto;max-width:100%;aspect-ratio:1;justify-self:center;min-height:0}
+  .game>.bwrap .board{width:100%;height:100%;max-width:none}
+  .game>.pad{height:100%;grid-auto-rows:minmax(0,1fr);align-content:stretch;gap:4px}
+  .game>.pad .k{padding:0;font-size:1.35rem;min-height:0}.game>.pad .k.mod{font-size:.85rem}
+  .game>.pad.tot .tot-d{font-size:2.2rem;padding:0 12px}
+  .game .tot-q{flex-wrap:nowrap;overflow-x:auto}
+  .game .ctl button{padding:10px 0}
+  .game .ctl{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+  .game .ctl button{font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+@media (max-height:500px) and (orientation:landscape){
+  .game{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto auto auto;
+    grid-template-areas:"in top" "in sc" "in turn" "in act" "in ctl";gap:6px 14px;height:calc(100dvh - 24px);align-items:stretch}
+  .game>.side{display:contents}
+  .game .top{grid-area:top}.game .sbs,.game .crt,.game .target{grid-area:sc;min-height:0;overflow:auto}.game .turn{grid-area:turn}.game .act{grid-area:act}.game .ctl{grid-area:ctl}
+  .game>.pad,.game>.bwrap,.game>.board{grid-area:in}
+  .game>.board{height:100%;width:auto;max-width:100%;aspect-ratio:1;justify-self:center;min-height:0}
+  .game .side>.hint{display:none}
+  .game .top .disp{font-size:1.5rem}.game .round{font-size:1rem}.game .tags{flex-wrap:nowrap;overflow:hidden}
+  .game .sb{min-height:40px}.game .sb-n{padding:3px 10px}.game .sb-n b{font-size:.95rem}.game .sb-n small{font-size:.7rem}.game .sb-s{font-size:2rem}
+  .game .crt th,.game .crt td{padding:0 6px;line-height:1.1}.game .crt td{font-size:.95rem}.game .crt tbody th{font-size:.95rem}.game .crt thead th{font-size:.72rem}.game .crt .mpr{display:none}
+  .game .target b{font-size:2.2rem}.game .target div{padding:4px 24px 6px 12px}
+  .game .dart{min-width:48px;padding:2px 6px;font-size:1.15rem}
+  .game .act{flex-direction:row;height:44px;overflow:hidden}
+  .game .act>*{flex:1 1 auto;min-width:0}
+  .game .act .go{font-size:1.05rem;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .game .act .co{padding:3px 12px}.game .act .co b{font-size:1.35rem}
+  .game .act .msg{display:flex;align-items:center;font-size:.8rem;overflow:hidden}
+  .game .act .go~.msg,.game .act .co~.msg,.game .act .msg:empty{display:none}
+  .game>.bwrap{height:100%;width:auto;aspect-ratio:1;max-width:none;min-height:0}
+  .game>.bwrap .board{width:100%;height:100%;max-width:none}
+  .game>.pad{width:52vw;height:100%;grid-template-columns:repeat(8,1fr);grid-auto-rows:minmax(0,1fr);gap:4px}
+  .game>.pad .k{padding:0;font-size:1.15rem;min-height:0}.game>.pad .k.mod{font-size:.75rem}
+  .game>.pad.tot{grid-template-columns:repeat(3,1fr)!important}.game>.pad.tot .tot-d{font-size:1.8rem;padding:0 12px}
+  .game .tot-q{flex-wrap:nowrap;overflow-x:auto}
+  .game .ctl button{padding:8px 0}
+  .game .ctl{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+  .game .ctl button{font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+
 @media (max-width:520px){.pad{grid-template-columns:repeat(5,1fr)}.sb-s{font-size:2.6rem}.top .disp{font-size:2rem}.target b{font-size:3.4rem}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -723,9 +787,8 @@ function game(){
   <div class="top"><div><div class="disp">${title}</div>${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag ${t[0]=='<'?'hl':''}">${t}</span>`).join('')}</div>`:''}</div><div class="round">Tour ${S.round}</div></div>
   ${cr?crTable():scoreBars(rem)}
   <div class="turn"><span class="who">${esc(who)}${s.members.length>1?` <small>${esc(s.name)}</small>`:''}</span>${[0,1,2].map(i=>`<div class="dart ${S.turn[i]?'f':''}">${S.turn[i]?S.turn[i].l:'·'}</div>`).join('')}</div>
-  ${co?`<div class="co"><small>${gt?'Pour finir à '+S.gt:'Finish conseillé'}</small><b>${co}</b></div>`:''}
-  <div class="msg">${msg}</div>
-  ${S.wait?(RO?`<div class="co"><small>Volée</small><b>${vol}</b></div>`:`<button class="go" id="next">Volée ${vol} · Joueur suivant</button>`):''}
+  <div class="act">${S.wait?(RO?`<div class="co"><small>Volée</small><b>${vol}</b></div>`:`<button class="go" id="next">Volée ${vol} · Joueur suivant</button>`):co?`<div class="co"><small>${gt?'Pour finir à '+S.gt:'Finish conseillé'}</small><b>${co}</b></div>`:''}
+  <div class="msg">${msg||(cfg.voice&&heard?'Entendu : « '+esc(heard)+' »':'')}</div></div>
   ${RO?'':`<div class="ctl"><button id="miss">Raté</button><button id="undo">Annuler</button><button id="inp">${inpNext()}</button>${micBtn()}<button id="menu">Menu</button></div>${micHint()}`}
   </div></div>`;
   if(RO){const b=$('bd');if(b)drawBoard(b);app.onclick=null;return}
@@ -902,9 +965,8 @@ function tGame(){
   <div class="top"><div><div class="disp">${D.name}</div><div class="tags"><span class="tag">${esc(T.name)}</span><span class="tag">Entraînement</span>${!RO&&cfg.room&&sb?`<span class="tag hl"><b>Code écran ${cfg.room}</b></span>`:''}</div></div><div class="round">${T.darts} fl.</div></div>
   <div class="target"><div><small>Vise</small><b>${vw.big}</b><span>${vw.sub}</span></div></div>
   <div class="turn"><span class="who">Volée</span>${[0,1,2].map(i=>{const d=T.turn[i];return `<div class="dart ${d?(d.ok?'ok':'f'):''}">${d?d.l:'·'}</div>`}).join('')}</div>
-  ${co?`<div class="co"><small>Finish conseillé</small><b>${co}</b></div>`:''}
-  <div class="msg">${msg}</div>
-  ${T.wait&&!RO?'<button class="go" id="next">Volée suivante</button>':''}
+  <div class="act">${T.wait&&!RO?'<button class="go" id="next">Volée suivante</button>':co?`<div class="co"><small>Finish conseillé</small><b>${co}</b></div>`:''}
+  <div class="msg">${msg||(cfg.voice&&heard?'Entendu : « '+esc(heard)+' »':'')}</div></div>
   ${RO?'':`<div class="ctl"><button id="miss">Raté</button><button id="undo">Annuler</button><button id="inp">${inpNext()}</button>${micBtn()}<button id="quit">Arrêter</button></div>${micHint()}`}
   </div></div>`;
   if(RO){const b=$('bd');if(b)drawBoard(b);app.onclick=null;return}
