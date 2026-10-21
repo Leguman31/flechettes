@@ -128,6 +128,10 @@ a{color:var(--hl)}
 .tot-d{grid-column:1/-1;font-family:var(--disp);font-size:4rem;font-weight:900;text-align:right;background:var(--band2);padding:4px 16px;border-radius:4px;color:var(--hl);font-variant-numeric:tabular-nums}
 .tot-q{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin:0}
 
+.bwrap{position:relative;width:100%;max-width:calc(100vh - 40px);max-width:calc(100dvh - 40px);justify-self:center}
+.bwrap .board{touch-action:none;max-width:100%}
+.loupe{position:absolute;width:150px;height:150px;border-radius:50%;border:3px solid var(--hl);box-shadow:0 6px 24px rgba(0,0,0,.55);pointer-events:none;z-index:5}
+.lp-l{position:absolute;transform:translateX(-50%);background:var(--hl);color:var(--ink);font-family:var(--disp);font-weight:900;font-size:1.6rem;padding:2px 12px;border-radius:4px;pointer-events:none;z-index:5;white-space:nowrap}
 .board{display:block;width:100%;max-width:calc(100vh - 40px);max-width:calc(100dvh - 40px);aspect-ratio:1;justify-self:center;cursor:crosshair}
 
 /* Tableaux */
@@ -587,6 +591,31 @@ function hit(cv,e){
   let a=Math.atan2(y,x)+PI/2+PI/20;a=(a%(2*PI)+2*PI)%(2*PI);
   return{v:ORDER[Math.floor(a/(PI/10))%20],m:r<T0?1:r<T1?3:r<D0?1:2,x,y};
 }
+// Case touchée allumée en jaune
+function hiBoard(cv,h){if(!h||h.v==0)return;const s=cv.clientWidth,d=devicePixelRatio||1,c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);
+  const R=s/2,P=R*PLAY;c.translate(R,R);const r=Math.hypot(h.x,h.y);c.beginPath();
+  if(r<RB)c.arc(0,0,RB*P,0,7);else if(r<R25){c.arc(0,0,R25*P,0,7);c.arc(0,0,RB*P,7,0,true)}
+  else{let a=Math.atan2(h.y,h.x)+PI/2+PI/20;a=(a%(2*PI)+2*PI)%(2*PI);const i=Math.floor(a/(PI/10))%20,a0=(i-.5)*PI/10-PI/2,a1=a0+PI/10;
+    const[r0,r1]=r<T0?[R25,T0]:r<T1?[T0,T1]:r<D0?[T1,D0]:[D0,1];c.arc(0,0,r1*P,a0,a1);c.arc(0,0,r0*P,a1,a0,true)}
+  c.closePath();c.fillStyle='rgba(255,210,63,.55)';c.fill();c.lineWidth=3;c.strokeStyle='#ffd23f';c.stroke()}
+// Appui court = marque ; appui long = loupe + case allumée, on glisse puis on lève le doigt
+function boardPress(bd,onThrow){let timer=null,hold=false,down=false,last=null,start=null;const lp=$('lp'),ll=$('lpl'),L=150;
+  const hide=()=>{if(lp)lp.hidden=true;if(ll)ll.hidden=true;drawBoard(bd)};
+  const show=pt=>{const h=hit(bd,pt);drawBoard(bd);hiBoard(bd,h);if(!lp||!ll)return;
+    const b=bd.getBoundingClientRect(),w=bd.parentNode.getBoundingClientRect(),px=pt.clientX-w.left,py=pt.clientY-w.top,d=devicePixelRatio||1;
+    let lx=Math.max(0,Math.min(w.width-L,px-L/2)),ly=py-L-60;if(ly<0)ly=Math.min(w.height-L,py+60);
+    lp.hidden=false;lp.style.left=lx+'px';lp.style.top=ly+'px';lp.width=lp.height=L*d;
+    const c=lp.getContext('2d'),k=bd.width/b.width,z=2.6,src=L/z*k,sx=(pt.clientX-b.left)*k,sy=(pt.clientY-b.top)*k;
+    c.fillStyle='#07101f';c.fillRect(0,0,L*d,L*d);c.drawImage(bd,sx-src/2,sy-src/2,src,src,0,0,L*d,L*d);
+    c.strokeStyle='#fff';c.lineWidth=2*d;c.beginPath();c.moveTo(L*d/2-10*d,L*d/2);c.lineTo(L*d/2+10*d,L*d/2);c.moveTo(L*d/2,L*d/2-10*d);c.lineTo(L*d/2,L*d/2+10*d);c.stroke();
+    ll.hidden=false;ll.textContent=h?(h.v==0?'Hors cible':lab(h.v,h.m)):'';ll.style.left=(lx+L/2)+'px';ll.style.top=(ly+L+6)+'px'};
+  const pt=e=>({clientX:e.clientX,clientY:e.clientY});
+  bd.onpointerdown=e=>{e.preventDefault();down=true;hold=false;last=start=pt(e);try{bd.setPointerCapture(e.pointerId)}catch(x){}
+    clearTimeout(timer);timer=setTimeout(()=>{if(down){hold=true;show(last)}},230)};
+  bd.onpointermove=e=>{if(!down)return;last=pt(e);if(hold)show(last);else if(Math.hypot(last.clientX-start.clientX,last.clientY-start.clientY)>14){clearTimeout(timer);hold=true;show(last)}};
+  bd.onpointerup=e=>{if(!down)return;down=false;clearTimeout(timer);last=pt(e);const h=hit(bd,last),was=hold;hold=false;if(was)hide();if(h)onThrow(h.v,h.m,h.x,h.y)};
+  bd.onpointercancel=()=>{down=false;hold=false;clearTimeout(timer);hide()};
+}
 const redraw=()=>{const b=$('bd');if(b)drawBoard(b);drawLogo()};
 addEventListener('resize',redraw);try{document.fonts.ready.then(redraw)}catch(e){}
 // Saisie commune : clavier ou cible
@@ -600,7 +629,7 @@ function inputHTML(nums,act){const md=inpModes.includes(cfg.input)?cfg.input:'cl
     <div class="tot-q">${[26,41,45,60,81,85,100,140,180].map(q=>`<button class="chip" data-tq="${q}">${q}</button>`).join('')}</div></div>`}
   return md=='clavier'
     ?`<div class="pad"><button class="k mod ${mult==2?'on':''}" data-m="2">Double</button><button class="k mod ${mult==3?'on':''}" data-m="3">Triple</button>${nums.map(n=>`<button class="k ${act&&act.length<3&&act.includes(n)?'aim':''}" data-k="${n}">${n}</button>`).join('')}<button class="k bull" data-k="25">25</button><button class="k bull2" data-k="50">Bull</button></div>`
-    :'<canvas class="board" id="bd" aria-label="Cible : touche l’endroit où la fléchette est plantée"></canvas>';
+    :'<div class="bwrap"><canvas class="board" id="bd" aria-label="Cible : touche l’endroit où la fléchette est plantée. Reste appuyé pour zoomer"></canvas><canvas class="loupe" id="lp" hidden></canvas><div class="lp-l" id="lpl" hidden></div></div>';
 }
 // ---------- Saisie à la voix (réservée aux comptes) : « score double 7 » ----------
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -635,7 +664,7 @@ const micBtn=()=>voiceOK()?`<button id="mic" class="${cfg.voice?'on':''}" aria-p
 const micHint=()=>voiceOK()&&cfg.voice?`<div class="hint">Dis « score » puis la fléchette : « score double 7 », « score 20 », « score bull », « score raté ». « Score suivant » pour passer, « score annuler » pour corriger.${heard?'<br>'+(heard.startsWith('Pas compris')?esc(heard):'Entendu : « '+esc(heard)+' »'):''}</div>`:'';
 function bindInput(onThrow,rerender,extra){curThrow=onThrow;curRender=rerender;
   if(cfg.voice&&voiceOK())voiceStart();else voiceStop();
-  const bd=$('bd');if(bd){drawBoard(bd);bd.onpointerdown=e=>{e.preventDefault();const h=hit(bd,e);if(h)onThrow(h.v,h.m,h.x,h.y)}}
+  const bd=$('bd');if(bd){drawBoard(bd);boardPress(bd,onThrow)}
   app.onclick=e=>{const t=e.target.closest('button');if(!t)return;const d=t.dataset;
     if(d.k){const v=+d.k,m=v>20?1:mult;mult=1;onThrow(v,m)}
     else if(d.m){mult=mult==+d.m?1:+d.m;rerender()}
