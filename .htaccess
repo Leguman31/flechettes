@@ -1,0 +1,12 @@
+# Toujours en HTTPS et sans « www » (nécessaire pour l'appli installable)
+RewriteEngine On
+RewriteCond %{HTTPS} off [OR]
+RewriteCond %{HTTP_HOST} ^www\. [NC]
+RewriteRule ^ https://scoreflechettes.fr%{REQUEST_URI} [L,R=301]
+AddType application/vnd.android.package-archive .apk
+# Les mises à jour de l'appli arrivent tout de suite
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|js|json)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>

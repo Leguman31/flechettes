@@ -8,6 +8,8 @@ permissions:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    env:
+      FTP_SERVER: ${{ secrets.FTP_SERVER }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -39,3 +41,16 @@ jobs:
           git add -f Flechettes.apk
           git commit -m "APK à jour [skip ci] [skip netlify]" || exit 0
           git pull --rebase origin main && git push origin HEAD:main
+      - name: Préparer le site
+        run: |
+          mkdir site
+          cp index.html manifest.json sw.js supabase.js qrcode.js icon-*.png .htaccess Flechettes.apk site/
+      - name: Mettre le site sur scoreflechettes.fr (OVH)
+        if: ${{ env.FTP_SERVER != '' }}
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./site/
+          server-dir: ./scoreflechettes/
