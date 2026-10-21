@@ -219,9 +219,9 @@ let live='idle',linkNote='';
 let DB={profiles:[],games:[]};
 try{const d=JSON.parse(localStorage.getItem(DBK));if(d)DB=Object.assign(DB,d)}catch(e){}
 const saveDB=()=>{try{localStorage.setItem(DBK,JSON.stringify(DB))}catch(e){}};
-const guest=n=>/^joueur \d+$/i.test(n);
+const guest=n=>/^\s*(joueur|player|invit[eé])\s*\d*\s*$/i.test(n);
 const lc=s=>s.trim().toLowerCase();
-function names(){const m=new Map();DB.profiles.forEach(p=>{if(!p.archived&&!m.has(lc(p.name)))m.set(lc(p.name),p.name)});return[...m.values()].sort((a,b)=>a.localeCompare(b,'fr'))}
+function names(){const m=new Map();DB.profiles.forEach(p=>{if(!p.archived&&!guest(p.name)&&!m.has(lc(p.name)))m.set(lc(p.name),p.name)});return[...m.values()].sort((a,b)=>a.localeCompare(b,'fr'))}
 function pidFor(n){if(!n||guest(n))return null;let p=DB.profiles.find(p=>!p.archived&&lc(p.name)==lc(n));
   if(!p){p={id:uuid(),name:n.trim(),created:new Date().toISOString(),sync:0};DB.profiles.push(p);saveDB()}return p.id}
 const idsOf=n=>new Set(DB.profiles.filter(p=>lc(p.name)==lc(n)).map(p=>p.id));
