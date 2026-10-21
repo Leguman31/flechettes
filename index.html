@@ -180,6 +180,8 @@ html.tv{font-size:clamp(16px,1.45vw,30px)}
 .qr img{width:100%;height:auto;display:block;image-rendering:pixelated}
 .code{font-family:var(--disp);font-weight:900;font-size:9rem;line-height:.9;color:var(--hl);letter-spacing:.08em}
 .live{display:flex;align-items:center;gap:8px}
+.scr-x{position:fixed;right:calc(12px + env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));opacity:.35;font-size:.8rem;padding:8px 12px}
+.scr-x:hover,.scr-x:focus-visible{opacity:1}
 .dot{width:12px;height:12px;border-radius:50%;background:var(--mut);flex:none}
 .dot.on{background:var(--green)}
 .link{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--band);border-radius:4px;padding:12px}
@@ -294,7 +296,10 @@ function screenMain(){let code='';
   const h=/^#ecran-([A-Z0-9]{4})$/i.exec(location.hash);
   try{code=(h?h[1]:localStorage.getItem('darts-room')||'').toUpperCase()}catch(e){}
   let last={k:'idle'},seen=false;
-  const show=()=>{if(code&&last.k=='match'&&last.S){S=last.S;game()}else if(code&&last.k=='drill'&&last.T){T=last.T;tGame()}else screenIdle()};
+  const leave=()=>{code='';seen=false;last={k:'idle'};try{localStorage.removeItem('darts-room')}catch(e){}openChan('');show()};
+  const exitBtn=()=>{const b=document.createElement('button');b.className='sec scr-x';b.textContent='Changer de partie';b.onclick=leave;app.appendChild(b)};
+  const show=()=>{if(code&&last.k=='match'&&last.S){S=last.S;game();exitBtn()}else if(code&&last.k=='drill'&&last.T){T=last.T;tGame();exitBtn()}else screenIdle()};
+  addEventListener('keydown',e=>{if(e.key=='Escape'&&code)leave()});
   function screenIdle(){live='idle';screen='screen';
     app.innerHTML=code?`<div class="idle" style="grid-template-columns:1fr"><div>${brand()}
       <div class="hint" style="font-size:1.4rem">Partie</div><div class="code">${code}</div>
@@ -305,7 +310,7 @@ function screenMain(){let code='';
       <form id="cf" class="link" style="max-width:640px;margin-top:16px"><input id="cc" maxlength="4" placeholder="Code" aria-label="Code de la partie" autocomplete="off" style="flex:1 1 200px;font-size:3rem">
       <button class="go" type="submit">Afficher</button></form><div class="msg" id="cm"></div></div></div>`;
     drawLogo();
-    if(code){$('chg').onclick=()=>{code='';seen=false;last={k:'idle'};try{localStorage.removeItem('darts-room')}catch(e){}openChan('');show()};return}
+    if(code){$('chg').onclick=leave;return}
     const f=$('cf'),i=$('cc');try{i.focus()}catch(e){}
     f.onsubmit=e=>{e.preventDefault();const c=i.value.trim().toUpperCase();
       if(!/^[A-Z0-9]{4}$/.test(c)){$('cm').textContent='Le code fait 4 caractères.';return}
