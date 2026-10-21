@@ -261,6 +261,7 @@ function authErr(e){const m=(e&&e.message)||'';
   if(/password/i.test(m)&&/6|short|least/i.test(m))return'Le mot de passe doit faire au moins 6 caractères.';
   if(/email.*invalid|invalid.*email/i.test(m))return'Cette adresse e-mail n’est pas valide.';
   if(/not confirmed/i.test(m))return'Ton adresse n’est pas encore confirmée : ouvre le lien reçu par e-mail.';
+  if(/invitation/i.test(m))return'Ce code d’invitation n’est pas valide ou a déjà servi le nombre de fois prévu.';
   if(/fetch|network|load failed/i.test(m))return'Pas de connexion internet. Réessaie quand tu es en ligne.';
   return m||'Une erreur est survenue. Réessaie.'}
 
@@ -742,9 +743,9 @@ function accountView(){
   const up=acc.mode=='up';
   pane.innerHTML=`<div class="card">
   <div class="chips"><button class="chip ${up?'':'on'}" data-am="in">Se connecter</button><button class="chip ${up?'on':''}" data-am="up">Créer un compte</button></div>
-  <p class="txt">${up?'Crée ton compte pour retrouver tes joueurs et tes stats sur tous tes appareils. Les parties déjà jouées sur cet appareil y seront ajoutées.':'Connecte-toi pour retrouver tes stats.'}</p>
+  <p class="txt">${up?'Crée ton compte pour retrouver tes joueurs et tes stats sur tous tes appareils. Il te faut un code d’invitation, demande-le à l’organisateur. Les parties déjà jouées sur cet appareil seront ajoutées à ton compte.':'Connecte-toi pour retrouver tes stats.'}</p>
   <form id="af" class="card" style="padding:0;background:none">
-  ${up?'<label>Pseudo<input id="ap" autocomplete="nickname" maxlength="30" required></label>':''}
+  ${up?'<label>Code d’invitation<input id="ai" autocomplete="off" maxlength="40" required style="text-transform:uppercase"></label><label>Pseudo<input id="ap" autocomplete="nickname" maxlength="30" required></label>':''}
   <label>E-mail<input id="ae" type="email" autocomplete="email" required></label>
   <label>Mot de passe<input id="aw" type="password" autocomplete="${up?'new-password':'current-password'}" minlength="6" required></label>
   ${up?'<div class="hint">Au moins 6 caractères.</div>':''}
@@ -754,10 +755,11 @@ function accountView(){
   ${up?'<div class="hint">En créant un compte, tu acceptes la <a href="#" data-go="privacy">politique de confidentialité</a>.</div>':'<button class="ghost" data-go="privacy">Confidentialité</button>'}</div>`;
   pane.onclick=e=>{const t=e.target.closest('[data-am],[data-go]');if(!t)return;e.preventDefault();
     if(t.dataset.go)return home('privacy');acc.mode=t.dataset.am;acc.msg='';acc.ok='';accountView()};
-  $('af').onsubmit=async e=>{e.preventDefault();const em=$('ae').value.trim(),pw=$('aw').value,ps=up?$('ap').value.trim():'';
+  $('af').onsubmit=async e=>{e.preventDefault();const em=$('ae').value.trim(),pw=$('aw').value,ps=up?$('ap').value.trim():'',iv=up?$('ai').value.trim().toUpperCase():'';
+    if(up&&!iv){acc.msg='Entre le code d’invitation que l’on t’a donné.';return accountView()}
     if(up&&!ps){acc.msg='Choisis un pseudo.';return accountView()}
     acc.busy=true;acc.msg='';acc.ok='';accountView();
-    try{if(up){const{data,error}=await sb.auth.signUp({email:em,password:pw,options:{data:{pseudo:ps}}});if(error)throw error;
+    try{if(up){const{data,error}=await sb.auth.signUp({email:em,password:pw,options:{data:{pseudo:ps,invite:iv}}});if(error)throw error;
         if(!data.session){acc.ok='Compte créé. Ouvre le lien reçu par e-mail pour le confirmer, puis connecte-toi.';acc.mode='in'}}
       else{const{error}=await sb.auth.signInWithPassword({email:em,password:pw});if(error)throw error}}
     catch(er){acc.msg=authErr(er)}
