@@ -243,6 +243,9 @@ async function sync(){
     const[a,b]=await Promise.all([sb.from('players').select('id,name,archived,created_at'),
       sb.from('games').select('id,played_at,kind,data').order('played_at',{ascending:false}).limit(3000)]);
     if(a.error||b.error)throw a.error||b.error;
+    // Ce qui a été effacé en ligne (depuis un autre appareil) disparaît aussi ici
+    const rpi=new Set(a.data.map(r=>r.id)),rgi=new Set(b.data.map(r=>r.id));
+    DB.profiles=DB.profiles.filter(p=>!p.sync||rpi.has(p.id));DB.games=DB.games.filter(g=>!g.sync||rgi.has(g.id));
     const lp=new Map(DB.profiles.map(p=>[p.id,p]));
     a.data.forEach(r=>{const l=lp.get(r.id);if(!l||l.sync)lp.set(r.id,{id:r.id,name:r.name,archived:r.archived,created:r.created_at,sync:1})});
     DB.profiles=[...lp.values()];
@@ -862,7 +865,9 @@ function accountView(){
     <p class="txt">Tes joueurs, tes matchs et tes entraînements sont sauvegardés dans ton compte et se retrouvent sur tous tes appareils.</p>
     <div class="${syncMsg?'msg':'hint'}">${syncing?'Synchronisation en cours…':syncMsg||(DB.last?'Dernière synchronisation : '+new Date(DB.last).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'')}</div>
     <div class="row"><button class="sec" id="sync" ${syncing?'disabled':''}>Synchroniser maintenant</button><button class="sec" id="out">Se déconnecter</button></div>
-    <div class="msg">${acc.msg}</div>
+    <div class="msg">${acc.msg}</div>${acc.ok?`<div class="good">${acc.ok}</div>`:''}
+    <button class="danger ${acc.reset?'on':''}" id="reset">${acc.reset?'Confirmer : effacer toutes mes parties et mes joueurs':'Remettre mes stats à zéro'}</button>
+    ${acc.reset?'<div class="hint">Tes matchs, entraînements et joueurs seront effacés sur tous tes appareils. Ton compte est conservé. Touche à nouveau pour confirmer.</div>':''}
     <button class="danger ${acc.del?'on':''}" id="kill">${acc.del?'Confirmer : supprimer mon compte et mes données':'Supprimer mon compte'}</button>
     ${acc.del?'<div class="hint">Ton compte et toutes tes données en ligne seront effacés définitivement. Touche à nouveau pour confirmer.</div>':''}
     <button class="ghost" data-go="privacy">Confidentialité</button></div>
@@ -873,7 +878,12 @@ function accountView(){
         if(c==cfg.room){acc.jmsg='C’est le code de cet appareil : tape celui affiché sur la tablette.';return refresh()}
         try{history.replaceState(null,'','#rejoindre-'+c)}catch(e){}return joinMain(c)}
       if(t.dataset.go)return home('privacy');
+      if(t.id!='reset')acc.reset=false;if(t.id!='kill')acc.del=false;acc.ok='';
       if(t.id=='sync')sync();
+      else if(t.id=='reset'){if(!acc.reset){acc.reset=true}else{acc.reset=false;
+        const r1=await sb.from('games').delete().not('id','is',null),r2=await sb.from('players').delete().not('id','is',null);
+        if(r1.error||r2.error)acc.msg='Remise à zéro impossible pour le moment. Vérifie ta connexion et réessaie.';
+        else{DB={profiles:[],games:[],last:new Date().toISOString()};saveDB();cfg.statName='';save();acc.ok='Stats remises à zéro. Tes autres appareils se mettront à jour à leur prochaine synchronisation.'}}}
       else if(t.id=='out'){await sync();await sb.auth.signOut().catch(()=>{});clearAccountData()}
       else if(t.id=='kill'){if(!acc.del){acc.del=true}else{acc.del=false;const{error}=await sb.rpc('delete_my_account');
         if(error)acc.msg='Suppression impossible pour le moment. Réessaie plus tard.';else{await sb.auth.signOut().catch(()=>{});clearAccountData(true)}}}
