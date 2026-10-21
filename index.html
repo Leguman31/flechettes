@@ -283,7 +283,7 @@ function openChan(code,onMsg){
   if(!sb||!code)return;
   chan=sb.channel('partie-'+code,{config:{broadcast:{self:false}}});
   chan.on('broadcast',{event:'state'},m=>onMsg('state',m.payload)).on('broadcast',{event:'hello'},()=>onMsg('hello'))
-    .on('broadcast',{event:'join'},m=>onMsg('join',m.payload)).on('broadcast',{event:'joined'},m=>onMsg('joined',m.payload));
+    .on('broadcast',{event:'join'},m=>onMsg('join',m.payload)).on('broadcast',{event:'joined'},m=>onMsg('joined',m.payload)).on('broadcast',{event:'leave'},m=>onMsg('leave',m.payload));
   chan.subscribe(st=>{chanOK=st=='SUBSCRIBED';onMsg('status',st)});
 }
 function pushState(){if(isScreen||ro||!chan||!chanOK)return;
@@ -293,7 +293,9 @@ const genCode=()=>{const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return[...Array(4)
 // Téléphone : chaque partie a un code ; l'écran tape ce code pour l'afficher
 function phoneLink(){if(!sb)return;if(!cfg.room){cfg.room=genCode();save()}
   if(chan&&chan.topic&&chan.topic.endsWith(cfg.room))return;
-  openChan(cfg.room,(ev,p)=>{if(ev=='hello')pushState();else if(ev=='status'&&chanOK)pushState();else if(ev=='join')onJoin(p)})}
+  openChan(cfg.room,(ev,p)=>{if(ev=='hello')pushState();else if(ev=='status'&&chanOK)pushState();else if(ev=='join')onJoin(p);else if(ev=='leave')onLeave(p)})}
+function onLeave(p){if(!p||!p.uid)return;const P=cfg.players,i=P.findIndex(x=>x.uid==p.uid);if(i<0)return;
+  const n=P[i].n;if(P.length>1)P.splice(i,1);else{P[i]={n:'Joueur 1',t:0}}save();linkNote=n+' a quitté la partie.';if(screen=='home'&&view=='match')setup()}
 // Tablette : un joueur rejoint avec son compte (scan du QR code)
 function onJoin(p){if(!p||!p.uid||!p.pseudo)return;const P=cfg.players,name=String(p.pseudo).trim().slice(0,40)||'Invité';
   let i=P.findIndex(x=>x.uid==p.uid);
@@ -303,7 +305,7 @@ function onJoin(p){if(!p||!p.uid||!p.pseudo)return;const P=cfg.players,name=Stri
   save();try{chan.send({type:'broadcast',event:'joined',payload:{uid:p.uid}}).catch(()=>{})}catch(e){}
   linkNote=name+' a rejoint avec son compte : ses stats iront dans son compte.';if(screen=='home'&&view=='match')setup()}
 // Téléphone d'un joueur invité : rejoindre la partie d'une tablette
-let ro=false,pendingJoin=null,joinCode='',joined=false,remote=null,myRec=null;
+let ro=false,pendingJoin=null,joinCode='',joined=false,remote=null,myRec=null,joinedAt=0,stay=null,idleT=null;
 const myPseudo=()=>(user.user_metadata&&user.user_metadata.pseudo)||user.email.split('@')[0];
 function joinMain(code){joinCode=code;
   if(!sb){screen='join';app.innerHTML=brand()+'<div class="card"><p class="txt">Service en ligne indisponible : vérifie ta connexion internet.</p></div>';drawLogo();return}
@@ -320,19 +322,24 @@ function joinOpen(){openChan(joinCode,(ev,p)=>{
   if(ev=='status'&&chanOK){if(joined){chan.send({type:'broadcast',event:'hello',payload:{}}).catch(()=>{});return}
     chan.send({type:'broadcast',event:'join',payload:{uid:user.id,pseudo:myPseudo()}}).catch(()=>{});
     setTimeout(()=>{const m=$('jm');if(!joined&&m)m.textContent='Pas de réponse. Vérifie que la partie '+joinCode+' est ouverte sur la tablette, avec « Ajouter un joueur avec son compte ».'},6000)}
-  else if(ev=='joined'&&p&&p.uid==user.id){if(!joined){joined=true;chan.send({type:'broadcast',event:'hello',payload:{}}).catch(()=>{});joinMain(joinCode)}}
-  else if(ev=='state'&&joined){remote=p||{k:'idle'};joinRecord();if(screen=='join')joinMain(joinCode)}})}
+  else if(ev=='joined'&&p&&p.uid==user.id){if(!joined){joined=true;joinedAt=Date.now();chan.send({type:'broadcast',event:'hello',payload:{}}).catch(()=>{});joinMain(joinCode)}}
+  else if(ev=='state'&&joined){remote=p||{k:'idle'};if(remote.S&&remote.S.winner==null&&myRec&&myRec.mid!=remote.S.mid)stay=null;joinRecord();if(screen=='join')joinMain(joinCode)}})}
 function joinRender(){const keep=S;S=remote.S;game();S=keep;screen='join';
-  const b=document.createElement('button');b.className='sec scr-x';b.textContent='Quitter la partie';b.onclick=joinLeave;app.appendChild(b)}
+  const b=document.createElement('button');b.className='sec scr-x';b.textContent='Quitter la partie';b.onclick=joinLeave;app.appendChild(b);
+  if(remote.S.winner!=null&&myRec&&myRec.mid==remote.S.mid&&stay==null){const d=document.createElement('div');d.className='card';d.style.marginTop='12px';
+    d.innerHTML='<b>Match enregistré dans ton compte.</b><p class="hint">Sans réponse, tu quittes la partie tout seul dans 10 minutes.</p><div class="row"><button class="go" id="jstay">Rester pour la revanche</button><button class="sec" id="jout">Quitter</button></div>';
+    app.appendChild(d);d.onclick=e=>{const t=e.target.closest('button');if(!t)return;if(t.id=='jout')joinLeave();else{stay=true;clearTimeout(idleT);d.remove()}}}}
 // Enregistre le match dans MON compte à la fin ; le retire si la tablette annule la dernière fléchette
 function joinRecord(){const p=remote;if(!p||p.k!='match'||!p.S||!user)return;const s=p.S;
   const me=s.order.find(n=>s.ps[n]&&s.ps[n].uid==user.id);if(!me||!s.mid)return;
+  if(!joinRecord.ok)joinRecord.ok=new Set();if(s.winner==null)joinRecord.ok.add(s.mid);if(!joinRecord.ok.has(s.mid))return;
   if(s.winner!=null){if(myRec&&myRec.mid==s.mid)return;const w=s.sides[s.winner].members;
     const id=addGame('match',{mode:s.mode,start:s.start,ct:s.ct,dout:s.dout,teams:s.sides.some(x=>x.members.length>1),
       players:s.order.map(n=>({...s.ps[n],uid:undefined,name:n,pid:n==me?pidFor(me):null,won:w.includes(n)}))});
-    myRec={mid:s.mid,id}}
+    myRec={mid:s.mid,id};stay=null;clearTimeout(idleT);idleT=setTimeout(()=>{if(joined&&stay!==true)joinLeave()},10*60*1000)}
   else if(myRec&&myRec.mid==s.mid){removeGame(myRec.id);myRec=null}}
-function joinLeave(){ro=false;joined=false;remote=null;joinCode='';pendingJoin=null;openChan('');
+function joinLeave(){clearTimeout(idleT);if(joined&&chan&&user)try{chan.send({type:'broadcast',event:'leave',payload:{uid:user.id}}).catch(()=>{})}catch(e){}
+  ro=false;joined=false;remote=null;joinCode='';pendingJoin=null;stay=null;setTimeout(()=>openChan(''),300);
   try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}if(cfg.room)phoneLink();home('match')}
 // Écran (Raspberry) : on tape le code de la partie
 function screenMain(){let code='';
