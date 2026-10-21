@@ -253,7 +253,7 @@ html.tv{font-size:clamp(16px,1.45vw,30px)}
   .game{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto minmax(0,1fr) auto;
     grid-template-areas:"top" "sc" "turn" "act" "in" "ctl";gap:6px;height:calc(100dvh - 24px);align-items:stretch}
   .game>.side{display:contents}
-  .game .top{grid-area:top}.game .sbs,.game .crt,.game .target{grid-area:sc}.game .turn{grid-area:turn}.game .act{grid-area:act}.game .ctl{grid-area:ctl}
+  .game .side>.top{grid-area:top}.game .side>.sbs,.game .side>.crt,.game .side>.target{grid-area:sc}.game .side>.turn{grid-area:turn}.game .side>.act{grid-area:act}.game .side>.ctl{grid-area:ctl}
   .game>.pad,.game>.bwrap,.game>.board{grid-area:in}
   .game>.board{height:100%;width:auto;max-width:100%;aspect-ratio:1;justify-self:center;min-height:0}
   .game .side>.hint{display:none}
@@ -275,17 +275,19 @@ html.tv{font-size:clamp(16px,1.45vw,30px)}
   .game>.bwrap .board{width:100%;height:100%;max-width:none}
   .game>.pad{height:100%;grid-auto-rows:minmax(0,1fr);align-content:stretch;gap:4px}
   .game>.pad .k{padding:0;font-size:1.35rem;min-height:0}.game>.pad .k.mod{font-size:.85rem}
+  .game>.pad.tot{grid-template-rows:auto repeat(4,minmax(0,1fr)) auto;grid-auto-rows:auto}
   .game>.pad.tot .tot-d{font-size:2.2rem;padding:0 12px}
+  .game .tot-q .chip{padding:6px 12px;font-size:.9rem}
   .game .tot-q{flex-wrap:nowrap;overflow-x:auto}
-  .game .ctl button{padding:10px 0}
-  .game .ctl{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
-  .game .ctl button{font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .game .side>.ctl button{padding:10px 0}
+  .game .side>.ctl{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+  .game .side>.ctl button{font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 }
 @media (max-height:500px) and (orientation:landscape){
   .game{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto auto auto;
     grid-template-areas:"in top" "in sc" "in turn" "in act" "in ctl";gap:6px 14px;height:calc(100dvh - 24px);align-items:stretch}
   .game>.side{display:contents}
-  .game .top{grid-area:top}.game .sbs,.game .crt,.game .target{grid-area:sc;min-height:0;overflow:auto}.game .turn{grid-area:turn}.game .act{grid-area:act}.game .ctl{grid-area:ctl}
+  .game .side>.top{grid-area:top}.game .side>.sbs,.game .side>.crt,.game .side>.target{grid-area:sc;min-height:0;overflow:auto}.game .side>.turn{grid-area:turn}.game .side>.act{grid-area:act}.game .side>.ctl{grid-area:ctl}
   .game>.pad,.game>.bwrap,.game>.board{grid-area:in}
   .game>.board{height:100%;width:auto;max-width:100%;aspect-ratio:1;justify-self:center;min-height:0}
   .game .side>.hint{display:none}
@@ -305,10 +307,12 @@ html.tv{font-size:clamp(16px,1.45vw,30px)}
   .game>.pad{width:52vw;height:100%;grid-template-columns:repeat(8,1fr);grid-auto-rows:minmax(0,1fr);gap:4px}
   .game>.pad .k{padding:0;font-size:1.15rem;min-height:0}.game>.pad .k.mod{font-size:.75rem}
   .game>.pad.tot{grid-template-columns:repeat(3,1fr)!important}.game>.pad.tot .tot-d{font-size:1.8rem;padding:0 12px}
+  .game>.pad.tot{grid-template-rows:auto repeat(4,minmax(0,1fr)) auto;grid-auto-rows:auto}
+  .game .tot-q .chip{padding:4px 10px;font-size:.85rem}
   .game .tot-q{flex-wrap:nowrap;overflow-x:auto}
-  .game .ctl button{padding:8px 0}
-  .game .ctl{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
-  .game .ctl button{font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .game .side>.ctl button{padding:8px 0}
+  .game .side>.ctl{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+  .game .side>.ctl button{font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 }
 
 @media (max-width:520px){.pad{grid-template-columns:repeat(5,1fr)}.sb-s{font-size:2.6rem}.top .disp{font-size:2rem}.target b{font-size:3.4rem}}
