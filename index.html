@@ -405,9 +405,9 @@ function tvFlash(t,k){const d=document.createElement('div');d.className='tv-flas
 function tvMatch(s,prev){S=s;live='match';screen='game';const same=prev&&prev.mid&&prev.mid==s.mid;
   if(s.winner!=null){if(same&&prev.winner==null)tvFlash('Game shot','win');game();return}
   const cr=isCr(s.mode),side=s.sides[s.cur],who=side.members[side.mi%side.members.length];
-  const sum=s.turn.reduce((a,d)=>a+d.val,0),rem=tvRem(s),co=cr||s.wait?'':s.mode=='gotcha'?checkout(s.gt-rem,3-s.turn.length,s.dout):checkout(rem,3-s.turn.length,s.dout);
+  const sum=s.turn.reduce((a,d)=>a+d.val,0),rem=tvRem(s),co=cr||s.wait?'':s.mode=='gotcha'?(s.dout?checkoutD1(s.gt-rem,3-s.turn.length):checkout(s.gt-rem,3-s.turn.length,false)):checkout(rem,3-s.turn.length,s.dout);
   const title=cr?(s.mode=='wild'?'Wildcard':'Cricket'):s.mode=='gotcha'?'Gotcha':s.start;
-  const rules=[!isCr(s.mode)&&s.dout?'Double out':'',s.mode=='gotcha'?'Objectif '+s.gt:'',s.ct?'Cut throat : le plus bas gagne':'',s.bull50?'Bull unique':'',s.sides.some(x=>x.members.length>1)?'Équipes':''].filter(Boolean).join(' · ');
+  const rules=[s.mode=='x01'&&s.dout?'Double out':s.mode=='gotcha'&&s.dout?'Fin sur D1':'',s.mode=='gotcha'?'Objectif '+s.gt:'',s.ct?'Cut throat : le plus bas gagne':'',s.bull50?'Bull unique':'',s.sides.some(x=>x.members.length>1)?'Équipes':''].filter(Boolean).join(' · ');
   const darts=`<div class="tv-darts">${[0,1,2].map(i=>{const d=s.turn[i];return `<div class="tv-dart ${d?'f':''}">${d?d.l:''}</div>`}).join('')}</div>`;
   let body;
   if(cr){const mk=n=>['','/','✕','<span class="m3">✕</span>'][Math.min(n||0,3)],c=i=>i==s.cur?'cur':'';
@@ -469,7 +469,7 @@ function setup(){
   <div class="modes">${MODES.map(([id,l,d])=>`<button class="mode ${cur==id?'on':''}" data-mode="${id}"><b>${l}</b><small>${d}</small></button>`).join('')}</div>
   <h2>Règles</h2>
   <div class="opts">
-  ${x||cfg.mode=='gotcha'?opt('dout',cfg.dout,'Finir sur un double',cfg.mode=='gotcha'?'Pour arriver pile à 301, la dernière fléchette doit être un double ou le bull':'Le dernier lancer doit être un double ou le bull'):isCr(cfg.mode)?opt('ct',!!cfg.ct,'Cut throat','Tes points vont aux adversaires, le plus bas gagne'):''}
+  ${x?opt('dout',cfg.dout,'Finir sur un double','Le dernier lancer doit être un double ou le bull'):cfg.mode=='gotcha'?opt('dout',cfg.dout,'Finir sur le double 1','Pour arriver pile à 301, la dernière fléchette doit être le D1'):isCr(cfg.mode)?opt('ct',!!cfg.ct,'Cut throat','Tes points vont aux adversaires, le plus bas gagne'):''}
   ${opt('bull',!cfg.bull50,'Double bull',cfg.bull50?'Tout le bull vaut 50':'25 pour l’anneau, 50 pour le centre')}
   ${opt('teams',cfg.teams,'Jouer en équipes','Les coéquipiers partagent le score')}
   ${opt('rnd',cfg.random,'Ordre aléatoire','L’ordre est tiré au sort au lancement')}
@@ -540,6 +540,8 @@ function volee(p,n,tot,win){p.darts+=n;p.total+=tot;p.best=Math.max(p.best,tot);
 const SEG=(()=>{const o=[];for(let i=20;i>=1;i--)o.push(['T'+i,3*i,2],['S'+i,i,0],['D'+i,2*i,5]);o.push(['25',25,3],['Bull',50,4]);return o})();
 const DR=[20,16,18,12,10,8,14,6,4,2,19,17,15,13,11,9,7,5,3,1];
 const dpen=x=>x[0]=='Bull'?6:DR.indexOf(+x[0].slice(1));
+// Gotcha « fin sur D1 » : on prépare le reste puis D1
+function checkoutD1(r,darts){if(r==2&&darts>=1)return'D1';if(r<3||darts<2)return'';const pre=checkout(r-2,darts-1,false);return pre?pre+' D1':''}
 function checkout(r,darts,dout){
   if(darts<1||r<(dout?2:1)||r>(dout?170:180))return'';
   const fin=dout?SEG.filter(x=>x[0][0]=='D'||x[0]=='Bull'):SEG,fp=x=>dout?dpen(x):x[2];
@@ -668,10 +670,10 @@ function game(){
   screen='game';live='match';const RO=isScreen||ro;if(S.winner!=null){winScreen();return pushState()}
   const s=S.sides[S.cur],who=thrower(),cr=isCr(S.mode),gt=S.mode=='gotcha',left=3-S.turn.length;
   const sum=S.turn.reduce((a,d)=>a+d.val,0),rem=S.wait=='bust'?s.score:gt?s.score+sum:s.score-sum;
-  const co=cr||S.wait?'':gt?checkout(S.gt-rem,left,S.dout):checkout(rem,left,S.dout);
+  const co=cr||S.wait?'':gt?(S.dout?checkoutD1(S.gt-rem,left):checkout(S.gt-rem,left,false)):checkout(rem,left,S.dout);
   inpModes=cr?['cible','clavier']:['cible','clavier','total'];
   const title=cr?(S.mode=='wild'?'Wildcard':'Cricket'):gt?'Gotcha':S.start;
-  const tags=[S.mode!='cricket'&&S.mode!='wild'&&S.dout?'Double out':'',S.ct?'Cut throat : le plus bas gagne':'',S.bull50?'Bull unique':'',S.sides.some(x=>x.members.length>1)?'Équipes':'',].filter(Boolean);if(!RO&&cfg.room&&sb)tags.unshift('<b>Code écran '+cfg.room+'</b>');
+  const tags=[S.mode=='x01'&&S.dout?'Double out':S.mode=='gotcha'&&S.dout?'Fin sur D1':'',S.ct?'Cut throat : le plus bas gagne':'',S.bull50?'Bull unique':'',S.sides.some(x=>x.members.length>1)?'Équipes':'',].filter(Boolean);if(!RO&&cfg.room&&sb)tags.unshift('<b>Code écran '+cfg.room+'</b>');
   const nums=cr?S.nums.filter(n=>n<25):[...Array(20)].map((_,i)=>i+1);
   BD={act:cr?S.nums:null,turn:S.turn};
   const vol=S.wait=='bust'?'Bust':cr?sum+(sum>1?' marques':' marque'):sum;
@@ -701,7 +703,7 @@ function throwDart(v,m,x,y){
     else if(rest==0){s.darts+=S.turn.length;s.total+=tot;s.score=0;s.last=tot;volee(p,S.turn.length,tot,true);S.winner=S.cur;S.turn=[]}
     else if(S.turn.length==3)S.wait='ok';
   }else if(S.mode=='gotcha'){
-    S.turn.push({val:v*m,x,y,l});const tot=S.turn.reduce((a,d)=>a+d.val,0);gotchaStep(s,p,tot,S.turn.length,false,m==2||v==50);
+    S.turn.push({val:v*m,x,y,l});const tot=S.turn.reduce((a,d)=>a+d.val,0);gotchaStep(s,p,tot,S.turn.length,false,v==1&&m==2);
   }else{
     const n=v==50?25:v,mk=v==50?2:v==25?1:m;let got=0;
     if(v&&S.nums.includes(n)){
@@ -721,7 +723,7 @@ function throwDart(v,m,x,y){
 // Gotcha : dépasser 301 = bust ; tomber pile sur le score d'un adversaire le renvoie à 0
 function gotchaStep(s,p,tot,nd,last,isD){const run=s.score+tot;
   if(run>S.gt){S.wait='bust';msg='Bust : '+run+' dépasse '+S.gt+', le score reste à '+s.score;return}
-  if(S.dout&&(run==S.gt-1||(run==S.gt&&isD===false))){S.wait='bust';msg=run==S.gt?'Bust : il faut finir sur un double':'Bust : impossible de finir avec 1 point';return}
+  if(S.dout&&(run==S.gt-1||(run==S.gt&&isD===false))){S.wait='bust';msg=run==S.gt?'Bust : il faut finir sur le double 1':'Bust : il reste 1 point, impossible de finir sur le D1';return}
   S.sides.forEach(o=>{if(o!==s&&o.score>0&&o.score==run){o.score=0;S.gc=(S.gc||0)+1;p.got=(p.got||0)+1;msg='Gotcha ! '+o.name+' retombe à 0'}});
   if(run==S.gt){s.darts+=nd;s.total+=tot;s.score=S.gt;s.last=tot;volee(p,nd,tot,true);S.winner=S.cur;S.turn=[]}
   else if(last||S.turn.length>=3)S.wait='ok'}
