@@ -1,0 +1,12 @@
+# Toujours en HTTPS (nécessaire pour l'appli installable)
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+AddType application/vnd.android.package-archive .apk
+AddType application/manifest+json .webmanifest
+# Les mises à jour de l'appli arrivent tout de suite
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|js|json)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
