@@ -984,8 +984,7 @@ function statsView(){
   ${list.length>sv.lim?`<button class="ghost" id="more">Voir plus (${list.length-sv.lim} restantes)</button>`:''}`:'<p class="hint">Aucune partie pour ce filtre.</p>'}
   <h2>Gérer ce joueur</h2>
   <div class="card"><label>Nom du joueur<input id="rn" value="${esc(n)}"></label><div class="msg">${err}</div>
-  <div class="row"><button class="sec" id="rename">Renommer</button><button class="danger ${statDel?'on':''}" id="pdel">${statDel?'Confirmer : supprimer '+esc(n):'Supprimer ce joueur'}</button></div>
-  ${statDel?'<div class="hint">Ses stats ne seront plus affichées. Touche à nouveau pour confirmer.</div>':''}</div>
+  <div class="row"><button class="sec" id="rename">Renommer</button></div></div>
   ${user?`<p class="hint">${syncing?'Synchronisation en cours…':DB.last?'Synchronisé avec ton compte le '+new Date(DB.last).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})+'.':''}</p>`:''}`;
   pane.onclick=e=>{const t=e.target.closest('button');if(!t)return;const d=t.dataset;err='';
     if(d.sn){cfg.statName=d.sn;statDel=false;sv.flt='all';sv.lim=20}
@@ -997,7 +996,6 @@ function statsView(){
       else if(lc(v)!=lc(n)&&names().some(a=>lc(a)==lc(v)))err='Un joueur porte déjà ce nom.';
       else{DB.profiles.forEach(p=>{if(lc(p.name)==lc(n)){p.name=v;p.sync=0}});cfg.statName=v;
         cfg.players.forEach(p=>{if(lc(p.n)==lc(n))p.n=v});if(lc(cfg.tp)==lc(n))cfg.tp=v;saveDB();sync()}}
-    else if(t.id=='pdel'){if(!statDel)statDel=true;else{DB.profiles.forEach(p=>{if(lc(p.name)==lc(n)){p.archived=true;p.sync=0}});statDel=false;cfg.statName='';saveDB();sync()}}
     save();statsView()};
 }
 function gameDetail(){
@@ -1014,11 +1012,9 @@ function gameDetail(){
     <div class="kpis"><div class="kpi"><b>${d.darts}</b><small>fléchettes lancées</small></div><div class="kpi hl"><b>${rec!=null?D.fmt(rec).replace(/ \(.*/,''):'–'}</b><small>record actuel</small></div></div>
     ${rec===d.score?'<p class="good">C’est le record de ce joueur.</p>':''}`}
   pane.innerHTML=`<button class="sec" id="sback" style="align-self:flex-start">‹ Retour aux stats</button>${body}
-  <button class="danger ${sv.del?'on':''}" id="gdel" style="align-self:flex-start">${sv.del?'Confirmer : supprimer cette partie':'Supprimer cette partie'}</button>
-  ${sv.del?'<div class="hint">Elle sera retirée des stats de tous ses joueurs. Touche à nouveau pour confirmer.</div>':''}`;
+`;
   pane.onclick=e=>{const t=e.target.closest('button');if(!t)return;
     if(t.id=='sback'){sv.gid=null;sv.del=false}
-    else if(t.id=='gdel'){if(!sv.del)sv.del=true;else{removeGame(g.id);sv.gid=null;sv.del=false}}
     statsView()};
 }
 
