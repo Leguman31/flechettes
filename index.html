@@ -913,7 +913,7 @@ function accountView(){
     if(up&&!iv){acc.msg='Entre le code d’invitation que l’on t’a donné.';return accountView()}
     if(up&&!ps){acc.msg='Choisis un pseudo.';return accountView()}
     acc.busy=true;acc.msg='';acc.ok='';accountView();
-    try{if(up){const{data,error}=await sb.auth.signUp({email:em,password:pw,options:{data:{pseudo:ps,invite:iv}}});if(error)throw error;
+    try{if(up){const{data,error}=await sb.auth.signUp({email:em,password:pw,options:{data:{pseudo:ps,display_name:ps,full_name:ps,name:ps,invite:iv}}});if(error)throw error;
         if(!data.session){acc.ok='Compte créé. Ouvre le lien reçu par e-mail pour le confirmer, puis connecte-toi.';acc.mode='in'}}
       else{const{error}=await sb.auth.signInWithPassword({email:em,password:pw});if(error)throw error}}
     catch(er){acc.msg=authErr(er)}
