@@ -16,26 +16,35 @@ body{background:var(--bg);background-image:linear-gradient(180deg,#0d1d3d 0,var(
 button{font:inherit;color:inherit;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 button:focus-visible,input:focus-visible{outline:2px solid var(--hl);outline-offset:2px}
 button:active{transform:translateY(1px)}
+button:disabled{opacity:.5;cursor:default}
 .wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:14px;min-height:100%}
+#pane{display:flex;flex-direction:column;gap:14px}
 .disp{font-family:var(--disp);font-weight:900;line-height:.95;letter-spacing:.01em}
 h2{font-family:var(--disp);font-weight:800;font-size:1.5rem;margin:6px 0 0;color:var(--mut)}
-.hint{color:var(--mut);font-size:.9rem}
+.hint{color:var(--mut);font-size:.9rem;line-height:1.4}
 .msg{color:var(--red);font-weight:700;min-height:1.2em}
+.good{color:var(--green);font-weight:700}
+.txt{line-height:1.55;max-width:65ch;margin:0}
 input{font:inherit;font-weight:600;background:var(--band);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:10px 12px;min-width:0;flex:1}
+a{color:var(--hl)}
 
-/* En-tête du menu */
-.brand{display:flex;align-items:center;gap:14px;padding-block:6px 4px}
+/* En-tête et onglets */
+.brand{display:flex;align-items:center;gap:14px;padding-block:6px 0}
 .brand canvas{width:56px;height:56px;flex:none}
 .brand .disp{font-size:clamp(2.4rem,7vw,3.6rem);text-transform:uppercase}
 .brand .disp span{color:var(--hl)}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:2px solid var(--line);padding-bottom:4px}
+.tabs button{background:transparent;padding:10px 14px;font-weight:700;border-radius:4px 4px 0 0;white-space:nowrap;color:var(--mut)}
+.tabs button.on{background:var(--hl);color:var(--ink)}
 
-/* Choix du jeu */
-.modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+/* Cartes de choix */
+.modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
 .mode{background:var(--band);border:1px solid var(--line);border-radius:4px;padding:12px 14px;text-align:left;display:flex;flex-direction:column;gap:4px;min-width:0}
-.mode b{font-family:var(--disp);font-weight:900;font-size:2.2rem;line-height:1}
+.mode b{font-family:var(--disp);font-weight:900;font-size:2rem;line-height:1}
 .mode small{color:var(--mut);font-size:.85rem;line-height:1.3}
+.mode em{font-style:normal;font-size:.82rem;font-weight:700;color:var(--hl)}
 .mode.on{background:var(--hl);border-color:var(--hl);color:var(--ink)}
-.mode.on small{color:#3d4a66}
+.mode.on small{color:#3d4a66}.mode.on em{color:var(--ink)}
 
 /* Règles en interrupteurs */
 .opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
@@ -54,9 +63,14 @@ input{font:inherit;font-weight:600;background:var(--band);color:var(--fg);border
 .ico{width:44px;height:44px;flex:none;background:var(--band);border:1px solid var(--line);border-radius:4px;font-weight:700}
 .tm{width:44px;height:44px;flex:none;border-radius:4px;font-family:var(--disp);font-weight:900;font-size:1.5rem;color:var(--ink)}
 .t0{background:var(--red)}.t1{background:var(--green)}.t2{background:var(--hl)}.t3{background:var(--blue)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:var(--band2);border-radius:20px;padding:8px 14px;font-weight:700}
+.chip.on{background:var(--hl);color:var(--ink)}
 .ghost{background:transparent;border:1px dashed var(--line);border-radius:4px;padding:12px;font-weight:700;color:var(--mut)}
 .go{background:var(--hl);color:var(--ink);font-family:var(--disp);font-size:1.8rem;font-weight:900;letter-spacing:.02em;padding:12px;border-radius:4px;text-transform:uppercase}
 .sec{background:var(--band2);border-radius:4px;padding:12px;font-weight:700}
+.danger{background:transparent;border:1px solid var(--red);color:var(--red);border-radius:4px;padding:12px;font-weight:700}
+.danger.on{background:var(--red);color:var(--fg)}
 
 /* Partie */
 .game{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,400px);gap:16px;flex:1;min-height:0;align-items:start}
@@ -80,11 +94,20 @@ input{font:inherit;font-weight:600;background:var(--band);color:var(--fg);border
 .sb.on::before{background:var(--hl)}
 .sb.on .sb-s{color:var(--hl)}
 
+/* Cible d'un exercice */
+.target{display:grid;grid-template-columns:8px minmax(0,1fr);background:var(--band2);clip-path:polygon(0 0,100% 0,calc(100% - 16px) 100%,0 100%)}
+.target::before{content:"";background:var(--hl)}
+.target div{padding:10px 30px 12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.target small{color:var(--mut);font-weight:700}
+.target b{font-family:var(--disp);font-weight:900;font-size:4.2rem;line-height:1;color:var(--hl);font-variant-numeric:tabular-nums}
+.target span{color:var(--mut);font-variant-numeric:tabular-nums}
+
 .turn{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .who{font-weight:700;margin-right:auto;min-width:0;overflow-wrap:anywhere}
 .who small{color:var(--mut);font-weight:400}
 .dart{background:var(--band);border-bottom:3px solid var(--line);min-width:60px;padding:6px 8px;text-align:center;font-family:var(--disp);font-size:1.6rem;font-weight:800}
 .dart.f{border-color:var(--hl)}
+.dart.ok{border-color:var(--green);color:var(--green)}
 .co{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--green);color:var(--ink);padding:6px 14px;clip-path:polygon(0 0,100% 0,calc(100% - 12px) 100%,0 100%)}
 .co small{font-weight:700}
 .co b{font-family:var(--disp);font-weight:900;font-size:1.9rem;letter-spacing:.02em;padding-right:10px}
@@ -97,6 +120,7 @@ input{font:inherit;font-weight:600;background:var(--band);color:var(--fg);border
 .k.mod{font-family:var(--body);font-size:1rem;font-weight:700}
 .k.mod.on{background:var(--hl);color:var(--ink);border-color:var(--hl)}
 .k.bull{background:#1f6b45;border-color:#1f6b45}.k.bull2{background:#9e2730;border-color:#9e2730}
+.k.aim{border-color:var(--hl);color:var(--hl)}
 
 .board{display:block;width:100%;max-width:calc(100vh - 40px);max-width:calc(100dvh - 40px);aspect-ratio:1;justify-self:center;cursor:crosshair}
 
@@ -117,6 +141,25 @@ input{font:inherit;font-weight:600;background:var(--band);color:var(--fg);border
 .stats td{font-family:var(--disp);font-size:1.5rem;font-weight:800}
 .stats .w{color:var(--hl)}
 
+/* Stats */
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px}
+.kpi{background:var(--band);border-radius:4px;padding:10px 12px;min-width:0}
+.kpi b{display:block;font-family:var(--disp);font-size:2.2rem;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.kpi small{color:var(--mut);font-size:.85rem}
+.kpi.hl b{color:var(--hl)}
+.hist{display:flex;flex-direction:column;gap:4px}
+.hrow{display:flex;justify-content:space-between;gap:10px;background:var(--band);padding:9px 12px;border-radius:4px}
+.hrow span{min-width:0;overflow-wrap:anywhere}
+.hrow small{color:var(--mut);margin-right:8px;font-variant-numeric:tabular-nums}
+.hrow .w{color:var(--green);font-weight:700}.hrow .l{color:var(--mut);font-weight:700}.hrow .s{color:var(--hl);font-weight:700}
+
+/* Compte */
+.card{background:var(--band);border-radius:4px;padding:16px;display:flex;flex-direction:column;gap:10px;max-width:520px}
+.card label{font-weight:700;font-size:.9rem;color:var(--mut);display:flex;flex-direction:column;gap:4px}
+.card input{background:var(--bg)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{flex:1 1 160px}
+
 /* Victoire */
 .win{display:flex;flex-direction:column;gap:14px;padding-block:20px}
 .banner{background:var(--hl);color:var(--ink);padding:14px 22px;clip-path:polygon(0 0,100% 0,calc(100% - 24px) 100%,0 100%);animation:in .5s ease-out both}
@@ -127,32 +170,98 @@ input{font:inherit;font-weight:600;background:var(--band);color:var(--fg);border
 @keyframes in{from{transform:translateX(-30px);opacity:0}to{transform:none;opacity:1}}
 
 @media (max-width:760px){.game{grid-template-columns:1fr}}
-@media (max-width:520px){.pad{grid-template-columns:repeat(5,1fr)}.sb-s{font-size:2.6rem}.top .disp{font-size:2rem}}
+@media (max-width:520px){.pad{grid-template-columns:repeat(5,1fr)}.sb-s{font-size:2.6rem}.top .disp{font-size:2rem}.target b{font-size:3.4rem}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
 <div class="wrap" id="app"></div>
 
+<script src="supabase.js"></script>
 <script>
-const $=id=>document.getElementById(id),app=$('app'),KEY='darts2',TEAM='ABCD';
+const $=id=>document.getElementById(id),app=$('app'),KEY='darts2',DBK='darts-db',TEAM='ABCD',PI=Math.PI;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let cfg={mode:'x01',start:501,dout:true,bull50:false,teams:false,random:false,input:innerWidth<600?'clavier':'cible',
-  players:[{n:'Joueur 1',t:0},{n:'Joueur 2',t:1}]};
-let S=null,mult=1,msg='',err='';const hist=[];
-try{const d=JSON.parse(localStorage.getItem(KEY));if(d){Object.assign(cfg,d.cfg||{});S=d.S&&d.S.ps?d.S:null}}catch(e){}
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({cfg,S}))}catch(e){}};
-const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const fmt=n=>n.toFixed(1).replace('.',',');
 const avg=o=>o.darts?fmt(o.total/o.darts*3):'–';
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const uuid=()=>crypto.randomUUID?crypto.randomUUID():'10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^Math.random()*16>>c/4).toString(16));
+const dateFr=s=>new Date(s).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+
+let cfg={mode:'x01',start:501,dout:true,bull50:false,teams:false,random:false,ct:false,input:innerWidth<600?'clavier':'cible',
+  players:[{n:'Joueur 1',t:0},{n:'Joueur 2',t:1}],drill:'clock',tp:'',statName:''};
+let S=null,T=null,mult=1,msg='',err='',view='match',screen='home';const hist=[];
+try{const d=JSON.parse(localStorage.getItem(KEY));if(d){Object.assign(cfg,d.cfg||{});S=d.S&&d.S.ps?d.S:null;T=d.T||null}}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({cfg,S,T}))}catch(e){}};
+
+// ---------- Profils et historique (sur l'appareil) ----------
+let DB={profiles:[],games:[]};
+try{const d=JSON.parse(localStorage.getItem(DBK));if(d)DB=Object.assign(DB,d)}catch(e){}
+const saveDB=()=>{try{localStorage.setItem(DBK,JSON.stringify(DB))}catch(e){}};
+const guest=n=>/^joueur \d+$/i.test(n);
+const lc=s=>s.trim().toLowerCase();
+function names(){const m=new Map();DB.profiles.forEach(p=>{if(!p.archived&&!m.has(lc(p.name)))m.set(lc(p.name),p.name)});return[...m.values()].sort((a,b)=>a.localeCompare(b,'fr'))}
+function pidFor(n){if(!n||guest(n))return null;let p=DB.profiles.find(p=>!p.archived&&lc(p.name)==lc(n));
+  if(!p){p={id:uuid(),name:n.trim(),created:new Date().toISOString(),sync:0};DB.profiles.push(p);saveDB()}return p.id}
+const idsOf=n=>new Set(DB.profiles.filter(p=>lc(p.name)==lc(n)).map(p=>p.id));
+function addGame(kind,data){const g={id:uuid(),at:new Date().toISOString(),kind,data,sync:0};DB.games.unshift(g);saveDB();sync();return g.id}
+function removeGame(id){const g=DB.games.find(x=>x.id==id);DB.games=DB.games.filter(x=>x.id!=id);saveDB();
+  if(g&&g.sync&&sb&&user)sb.from('games').delete().eq('id',id).then(()=>{},()=>{})}
+
+// ---------- Comptes en ligne (Supabase) ----------
+const SB_URL='https://baevqabzbajrknxitflm.supabase.co',SB_KEY='sb_publishable_94gFd0AH3y_icshvXM-Ukg_tt4gFiyy';
+let sb=null,user=null,syncing=false,syncMsg='',acc={mode:'in',msg:'',ok:'',busy:false,del:false};
+try{if(window.supabase)sb=supabase.createClient(SB_URL,SB_KEY)}catch(e){sb=null}
+async function sync(){
+  if(!sb||!user||syncing)return;syncing=true;
+  try{
+    const pp=DB.profiles.filter(p=>!p.sync);
+    if(pp.length){const{error}=await sb.from('players').upsert(pp.map(p=>({id:p.id,name:p.name,archived:!!p.archived,created_at:p.created})));if(error)throw error;pp.forEach(p=>p.sync=1)}
+    const gg=DB.games.filter(g=>!g.sync);
+    if(gg.length){const{error}=await sb.from('games').upsert(gg.map(g=>({id:g.id,played_at:g.at,kind:g.kind,data:g.data})));if(error)throw error;gg.forEach(g=>g.sync=1)}
+    const[a,b]=await Promise.all([sb.from('players').select('id,name,archived,created_at'),
+      sb.from('games').select('id,played_at,kind,data').order('played_at',{ascending:false}).limit(3000)]);
+    if(a.error||b.error)throw a.error||b.error;
+    const lp=new Map(DB.profiles.map(p=>[p.id,p]));
+    a.data.forEach(r=>{const l=lp.get(r.id);if(!l||l.sync)lp.set(r.id,{id:r.id,name:r.name,archived:r.archived,created:r.created_at,sync:1})});
+    DB.profiles=[...lp.values()];
+    const lg=new Set(DB.games.map(g=>g.id));
+    b.data.forEach(r=>{if(!lg.has(r.id))DB.games.push({id:r.id,at:r.played_at,kind:r.kind,data:r.data,sync:1})});
+    DB.games.sort((x,y)=>y.at.localeCompare(x.at));DB.last=new Date().toISOString();syncMsg='';saveDB();
+  }catch(e){syncMsg='Synchronisation impossible pour le moment. Tes parties restent sur cet appareil et seront envoyées plus tard.'}
+  syncing=false;refresh();
+}
+if(sb){
+  sb.auth.getSession().then(({data})=>{user=data.session?data.session.user:null;if(user)sync();refresh()}).catch(()=>{});
+  sb.auth.onAuthStateChange((ev,ses)=>{const was=user;user=ses?ses.user:null;if(user&&!was)setTimeout(sync,0);refresh()});
+  addEventListener('online',()=>sync());
+}
+function authErr(e){const m=(e&&e.message)||'';
+  if(/invalid login/i.test(m))return'E-mail ou mot de passe incorrect.';
+  if(/already registered|already exists/i.test(m))return'Un compte existe déjà avec cet e-mail. Connecte-toi.';
+  if(/password/i.test(m)&&/6|short|least/i.test(m))return'Le mot de passe doit faire au moins 6 caractères.';
+  if(/email.*invalid|invalid.*email/i.test(m))return'Cette adresse e-mail n’est pas valide.';
+  if(/not confirmed/i.test(m))return'Ton adresse n’est pas encore confirmée : ouvre le lien reçu par e-mail.';
+  if(/fetch|network|load failed/i.test(m))return'Pas de connexion internet. Réessaie quand tu es en ligne.';
+  return m||'Une erreur est survenue. Réessaie.'}
+
+// ---------- Écrans d'accueil ----------
+const brand=()=>`<header class="brand"><canvas id="logo" width="112" height="112" aria-hidden="true"></canvas><div class="disp">Score <span>Fléchettes</span></div></header>`;
+function home(v){if(v)view=v;screen='home';mult=1;
+  const tabs=[['match','Match'],['train','Entraînement'],['stats','Stats'],['compte',user?'Mon compte':'Compte']];
+  app.innerHTML=brand()+`<nav class="tabs">${tabs.map(([id,l])=>`<button class="${view==id||(view=='privacy'&&id=='compte')?'on':''}" data-view="${id}">${l}</button>`).join('')}</nav><div id="pane"></div>`;
+  drawLogo();app.onclick=e=>{const t=e.target.closest('[data-view]');if(t){err='';home(t.dataset.view)}};
+  ({match:setup,train:trainMenu,stats:statsView,compte:accountView,privacy:privacyView})[view]();
+}
+function refresh(){if(screen=='home'&&$('pane'))home()}
+const datalist=()=>`<datalist id="pl-list">${names().map(n=>`<option value="${esc(n)}"></option>`).join('')}</datalist>`;
+
+// ---------- Match : réglages ----------
 const MODES=[['301','301','Partie courte'],['501','501','Le classique des pros'],['701','701','Partie longue, idéale à plusieurs'],
   ['cricket','Cricket','Fermer du 15 au 20 et le bull'],['wild','Wildcard','Cricket avec des numéros tirés au sort qui changent']];
-
-// ---------- Menu ----------
+const opt=(id,on,t,d)=>`<button class="opt" role="switch" aria-checked="${on}" data-opt="${id}"><span><b>${t}</b><small>${d}</small></span><i class="sw"></i></button>`;
 function setup(){
-  const P=cfg.players,x=cfg.mode=='x01',cur=x?String(cfg.start):cfg.mode;
-  const opt=(id,on,t,d)=>`<button class="opt" role="switch" aria-checked="${on}" data-opt="${id}"><span><b>${t}</b><small>${d}</small></span><i class="sw"></i></button>`;
-  app.innerHTML=`<header class="brand"><canvas id="logo" width="112" height="112" aria-hidden="true"></canvas><div class="disp">Score <span>Fléchettes</span></div></header>
-  <h2>Jeu</h2>
+  const P=cfg.players,x=cfg.mode=='x01',cur=x?String(cfg.start):cfg.mode,pane=$('pane');
+  const quick=names().filter(n=>!P.some(p=>lc(p.n)==lc(n))).slice(0,12);
+  pane.innerHTML=`<h2>Jeu</h2>
   <div class="modes">${MODES.map(([id,l,d])=>`<button class="mode ${cur==id?'on':''}" data-mode="${id}"><b>${l}</b><small>${d}</small></button>`).join('')}</div>
   <h2>Règles</h2>
   <div class="opts">
@@ -161,19 +270,19 @@ function setup(){
   ${opt('teams',cfg.teams,'Jouer en équipes','Les coéquipiers partagent le score')}
   ${opt('rnd',cfg.random,'Ordre aléatoire','L’ordre est tiré au sort au lancement')}
   </div>
-  <h2>Joueurs</h2>
+  <h2>Joueurs</h2>${datalist()}
   <div class="plist">${P.map((p,i)=>`<div class="prow">
     ${cfg.teams?`<button class="tm t${p.t}" data-team="${i}" aria-label="Équipe ${TEAM[p.t]}, toucher pour changer">${TEAM[p.t]}</button>`:''}
-    <input id="n${i}" value="${esc(p.n)}" aria-label="Nom du joueur ${i+1}">
+    <input id="n${i}" value="${esc(p.n)}" list="pl-list" aria-label="Nom du joueur ${i+1}">
     ${cfg.random?'':`<button class="ico" data-up="${i}" aria-label="Monter">↑</button><button class="ico" data-dn="${i}" aria-label="Descendre">↓</button>`}
     <button class="ico" data-del="${i}" aria-label="Retirer">✕</button></div>`).join('')}</div>
-  ${cfg.teams?'<div class="hint">Touche la lettre d’un joueur pour changer son équipe.</div>':''}
+  ${quick.length?`<div class="chips">${quick.map(n=>`<button class="chip" data-addp="${esc(n)}">+ ${esc(n)}</button>`).join('')}</div>`:''}
+  <div class="hint">Chaque joueur nommé garde ses stats. « Joueur 1 », « Joueur 2 »… jouent en invités.${cfg.teams?' Touche la lettre d’un joueur pour changer son équipe.':''}</div>
   <button class="ghost" id="add">+ Ajouter un joueur</button>
   <div class="msg">${err}</div>
   <button class="go" id="start">Lancer le match</button>
-  ${S&&S.winner==null?'<button class="sec" id="resume">Reprendre la partie en cours</button>':''}`;
-  drawLogo();
-  app.onclick=e=>{const t=e.target.closest('button');if(!t)return;
+  ${S&&S.winner==null?'<button class="sec" id="resume">Reprendre le match en cours</button>':''}`;
+  pane.onclick=e=>{const t=e.target.closest('button');if(!t||t.dataset.view)return;
     P.forEach((p,i)=>{const v=$('n'+i).value.trim();p.n=v||'Joueur '+(i+1)});err='';const d=t.dataset;
     if(d.mode){if(/^\d+$/.test(d.mode)){cfg.mode='x01';cfg.start=+d.mode}else cfg.mode=d.mode}
     else if(d.opt=='dout')cfg.dout=!cfg.dout
@@ -185,19 +294,21 @@ function setup(){
     else if(d.up){const i=+d.up;if(i>0)[P[i-1],P[i]]=[P[i],P[i-1]]}
     else if(d.dn){const i=+d.dn;if(i<P.length-1)[P[i+1],P[i]]=[P[i],P[i+1]]}
     else if(d.del){if(P.length>1)P.splice(+d.del,1)}
+    else if(d.addp){const g=P.findIndex(p=>guest(p.n));if(g>=0)P[g].n=d.addp;else P.push({n:d.addp,t:P.length%2})}
     else if(t.id=='add')P.push({n:'Joueur '+(P.length+1),t:P.length%2})
     else if(t.id=='resume'){mult=1;msg='';return game()}
     else if(t.id=='start'){if(startGame())return}
     save();setup();
   };
 }
-function drawLogo(){const c=$('logo');if(!c)return;const x=c.getContext('2d'),R=56;x.translate(R,R);
+function drawLogo(){const c=$('logo');if(!c)return;const x=c.getContext('2d'),R=56;x.setTransform(1,0,0,1,R,R);
   for(let i=0;i<20;i++){const a0=(i-.5)*PI/10-PI/2,a1=a0+PI/10,dk=i%2==0;
     [[1,dk?'#e63946':'#2fbf71'],[.86,dk?'#1d1d1b':'#efe6c8'],[.62,dk?'#e63946':'#2fbf71'],[.5,dk?'#1d1d1b':'#efe6c8']].forEach(([r,col])=>{x.beginPath();x.moveTo(0,0);x.arc(0,0,R*r,a0,a1);x.closePath();x.fillStyle=col;x.fill()})}
   x.beginPath();x.arc(0,0,R*.15,0,7);x.fillStyle='#2fbf71';x.fill();x.beginPath();x.arc(0,0,R*.07,0,7);x.fillStyle='#e63946';x.fill()}
 
 function startGame(){
   const P=cfg.players.map(p=>({...p}));if(cfg.random)shuffle(P);
+  if(new Set(P.map(p=>lc(p.n))).size<P.length){err='Deux joueurs ont le même nom : change l’un des deux.';return false}
   let sides;
   if(cfg.teams){const m=new Map();P.forEach(p=>{if(!m.has(p.t))m.set(p.t,[]);m.get(p.t).push(p.n)});
     if(m.size<2){err='Répartis les joueurs dans au moins deux équipes.';return false}
@@ -206,8 +317,8 @@ function startGame(){
   let nums=[20,19,18,17,16,15];
   if(cfg.mode=='wild')nums=shuffle([...Array(20)].map((_,i)=>i+1)).slice(0,6).sort((a,b)=>b-a);
   if(cfg.mode!='x01')nums.push(25);
-  const ps={};P.forEach(p=>ps[p.n]={darts:0,total:0,best:0,t100:0,t140:0,t180:0,co:0,pts:0});
-  S={mode:cfg.mode,start:cfg.start,dout:cfg.dout,bull50:cfg.bull50,ct:!!cfg.ct&&cfg.mode!='x01',nums,cur:0,round:1,turn:[],wait:false,winner:null,ps,order:P.map(p=>p.n),
+  const ps={};P.forEach(p=>ps[p.n]={pid:pidFor(p.n),darts:0,total:0,best:0,t100:0,t140:0,t180:0,co:0,pts:0});
+  S={mode:cfg.mode,start:cfg.start,dout:cfg.dout,bull50:cfg.bull50,ct:!!cfg.ct&&cfg.mode!='x01',nums,cur:0,round:1,turn:[],wait:false,winner:null,ps,order:P.map(p=>p.n),gid:null,
     sides:sides.map(s=>({...s,mi:0,score:cfg.start,pts:0,marks:{},darts:0,total:0,last:''}))};
   hist.length=0;mult=1;msg='';save();game();return true;
 }
@@ -221,7 +332,7 @@ const SEG=(()=>{const o=[];for(let i=20;i>=1;i--)o.push(['T'+i,3*i,2],['S'+i,i,0
 const DR=[20,16,18,12,10,8,14,6,4,2,19,17,15,13,11,9,7,5,3,1];
 const dpen=x=>x[0]=='Bull'?6:DR.indexOf(+x[0].slice(1));
 function checkout(r,darts,dout){
-  if(r<(dout?2:1)||r>(dout?170:180))return'';
+  if(darts<1||r<(dout?2:1)||r>(dout?170:180))return'';
   const fin=dout?SEG.filter(x=>x[0][0]=='D'||x[0]=='Bull'):SEG,fp=x=>dout?dpen(x):x[2];
   let best=null,bs=1e9;
   const t=(set,f)=>{const s=set.reduce((a,x)=>a+x[2],0)+fp(f);if(s<bs){bs=s;best=[...set.sort((a,b)=>b[1]-a[1]),f]}};
@@ -232,24 +343,25 @@ function checkout(r,darts,dout){
 }
 
 // ---------- Cible ----------
-const ORDER=[20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5],PI=Math.PI;
+const ORDER=[20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
 // Proportions élargies (triples et doubles plus épais que sur une vraie cible) pour viser au doigt
 const RB=.07,R25=.15,T0=.5,T1=.62,D0=.86,PLAY=.84;
+let BD={act:null,turn:[]};
 function drawBoard(cv){
   const s=cv.clientWidth;if(!s)return;const d=devicePixelRatio||1;cv.width=cv.height=s*d;
-  const c=cv.getContext('2d');c.scale(d,d);const R=s/2,P=R*PLAY;c.translate(R,R);
-  const act=S&&S.mode!='x01'?S.nums:null;
+  const c=cv.getContext('2d');c.scale(d,d);const R=s/2,P=R*PLAY;c.translate(R,R);const act=BD.act;
   c.fillStyle='#07101f';c.beginPath();c.arc(0,0,R,0,7);c.fill();
   const ring=(r0,r1,col,a0,a1)=>{c.beginPath();c.arc(0,0,r1*P,a0,a1);c.arc(0,0,r0*P,a1,a0,true);c.closePath();c.fillStyle=col;c.fill()};
   c.textAlign='center';c.textBaseline='middle';
   for(let i=0;i<20;i++){const a0=(i-.5)*PI/10-PI/2,a1=a0+PI/10,dk=i%2==0,sc=dk?'#1d1d1b':'#efe6c8',mc=dk?'#d8352c':'#2f9a55';
     ring(R25,T0,sc,a0,a1);ring(T0,T1,mc,a0,a1);ring(T1,D0,sc,a0,a1);ring(D0,1,mc,a0,a1);
     const on=!act||act.includes(ORDER[i]);if(!on)ring(R25,1,'rgba(7,16,31,.74)',a0,a1);
-    c.fillStyle=on?'#f4f6fb':'#3b4a6b';c.font=`800 ${R*.13}px "Big Shoulders Display",Impact,sans-serif`;
+    c.fillStyle=on?(act&&act.length<3?'#ffd23f':'#f4f6fb'):'#3b4a6b';c.font=`800 ${R*.13}px "Big Shoulders Display",Impact,sans-serif`;
     const am=a0+PI/20;c.fillText(ORDER[i],Math.cos(am)*R*.92,Math.sin(am)*R*.92)}
   ring(RB,R25,'#2f9a55',0,7);ring(0,RB,'#d8352c',0,7);
+  if(act&&!act.includes(25)&&act.length<3)ring(0,R25,'rgba(7,16,31,.6)',0,7);
   c.strokeStyle='rgba(190,195,205,.55)';c.lineWidth=1;[RB,R25,T0,T1,D0,1].forEach(r=>{c.beginPath();c.arc(0,0,r*P,0,7);c.stroke()});
-  (S&&S.turn||[]).forEach((t,k)=>{if(t.x==null)return;c.beginPath();c.arc(t.x*P,t.y*P,R*.04,0,7);c.fillStyle='#ffd23f';c.fill();c.lineWidth=3;c.strokeStyle='#0a1730';c.stroke();
+  (BD.turn||[]).forEach((t,k)=>{if(t.x==null)return;c.beginPath();c.arc(t.x*P,t.y*P,R*.04,0,7);c.fillStyle='#ffd23f';c.fill();c.lineWidth=3;c.strokeStyle='#0a1730';c.stroke();
     c.fillStyle='#0a1730';c.font=`800 ${R*.05}px Barlow,sans-serif`;c.fillText(k+1,t.x*P,t.y*P+1)});
 }
 function hit(cv,e){
@@ -259,8 +371,24 @@ function hit(cv,e){
   let a=Math.atan2(y,x)+PI/2+PI/20;a=(a%(2*PI)+2*PI)%(2*PI);
   return{v:ORDER[Math.floor(a/(PI/10))%20],m:r<T0?1:r<T1?3:r<D0?1:2,x,y};
 }
-const redraw=()=>{const b=$('bd');if(b)drawBoard(b)};
+const redraw=()=>{const b=$('bd');if(b)drawBoard(b);drawLogo()};
 addEventListener('resize',redraw);try{document.fonts.ready.then(redraw)}catch(e){}
+// Saisie commune : clavier ou cible
+function inputHTML(nums,act){
+  return cfg.input=='clavier'
+    ?`<div class="pad"><button class="k mod ${mult==2?'on':''}" data-m="2">Double</button><button class="k mod ${mult==3?'on':''}" data-m="3">Triple</button>${nums.map(n=>`<button class="k ${act&&act.length<3&&act.includes(n)?'aim':''}" data-k="${n}">${n}</button>`).join('')}<button class="k bull" data-k="25">25</button><button class="k bull2" data-k="50">Bull</button></div>`
+    :'<canvas class="board" id="bd" aria-label="Cible : touche l’endroit où la fléchette est plantée"></canvas>';
+}
+function bindInput(onThrow,rerender,extra){
+  const bd=$('bd');if(bd){drawBoard(bd);bd.onpointerdown=e=>{e.preventDefault();const h=hit(bd,e);if(h)onThrow(h.v,h.m,h.x,h.y)}}
+  app.onclick=e=>{const t=e.target.closest('button');if(!t)return;const d=t.dataset;
+    if(d.k){const v=+d.k,m=v>20?1:mult;mult=1;onThrow(v,m)}
+    else if(d.m){mult=mult==+d.m?1:+d.m;rerender()}
+    else if(t.id=='miss')onThrow(0,1)
+    else if(t.id=='inp'){cfg.input=cfg.input=='clavier'?'cible':'clavier';save();rerender()}
+    else extra(t.id)};
+}
+const lab=(v,m)=>v==0?'0':v==50?'Bull':v==25?'25':(m==3?'T':m==2?'D':'')+v;
 
 // ---------- Tableaux ----------
 function crTable(){
@@ -278,20 +406,18 @@ function scoreBars(rem){
   <div class="sb-s">${on?rem:s.score}</div></div>`}).join('')}</div>`;
 }
 
-// ---------- Partie ----------
+// ---------- Match : partie ----------
 function game(){
-  if(S.winner!=null)return winScreen();
+  screen='game';if(S.winner!=null)return winScreen();
   const s=S.sides[S.cur],who=thrower(),cr=S.mode!='x01',left=3-S.turn.length;
   const sum=S.turn.reduce((a,d)=>a+d.val,0),rem=S.wait=='bust'?s.score:s.score-sum;
-  const co=!cr&&left>0&&!S.wait?checkout(rem,left,S.dout):'';
+  const co=!cr&&!S.wait?checkout(rem,left,S.dout):'';
   const title=cr?(S.mode=='wild'?'Wildcard':'Cricket'):S.start;
   const tags=[!cr&&S.dout?'Double out':'',S.ct?'Cut throat : le plus bas gagne':'',S.bull50?'Bull unique':'',S.sides.some(x=>x.members.length>1)?'Équipes':''].filter(Boolean);
   const nums=cr?S.nums.filter(n=>n<25):[...Array(20)].map((_,i)=>i+1);
-  const input=cfg.input=='clavier'
-    ?`<div class="pad"><button class="k mod ${mult==2?'on':''}" data-m="2">Double</button><button class="k mod ${mult==3?'on':''}" data-m="3">Triple</button>${nums.map(n=>`<button class="k" data-k="${n}">${n}</button>`).join('')}<button class="k bull" data-k="25">25</button><button class="k bull2" data-k="50">Bull</button></div>`
-    :'<canvas class="board" id="bd" aria-label="Cible : touche l’endroit où la fléchette est plantée"></canvas>';
+  BD={act:cr?S.nums:null,turn:S.turn};
   const vol=S.wait=='bust'?'Bust':cr?sum+(sum>1?' marques':' marque'):sum;
-  app.innerHTML=`<div class="game">${input}<div class="side">
+  app.innerHTML=`<div class="game">${inputHTML(nums,null)}<div class="side">
   <div class="top"><div><div class="disp">${title}</div>${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}</div><div class="round">Tour ${S.round}</div></div>
   ${cr?crTable():scoreBars(rem)}
   <div class="turn"><span class="who">${esc(who)}${s.members.length>1?` <small>${esc(s.name)}</small>`:''}</span>${[0,1,2].map(i=>`<div class="dart ${S.turn[i]?'f':''}">${S.turn[i]?S.turn[i].l:'·'}</div>`).join('')}</div>
@@ -300,24 +426,14 @@ function game(){
   ${S.wait?`<button class="go" id="next">Volée ${vol} · Joueur suivant</button>`:''}
   <div class="ctl"><button id="miss">Raté</button><button id="undo">Annuler</button><button id="inp">${cfg.input=='clavier'?'Cible':'Clavier'}</button><button id="menu">Menu</button></div>
   </div></div>`;
-  const bd=$('bd');if(bd){drawBoard(bd);bd.onpointerdown=e=>{e.preventDefault();const h=hit(bd,e);if(h)throwDart(h.v,h.m,h.x,h.y)}}
-  app.onclick=e=>{const t=e.target.closest('button');if(!t)return;const d=t.dataset;
-    if(d.k){const v=+d.k,m=v>20?1:mult;mult=1;throwDart(v,m);game()}
-    else if(d.m){mult=mult==+d.m?1:+d.m;game()}
-    else if(t.id=='miss')throwDart(0,1)
-    else if(t.id=='next')confirmTurn()
-    else if(t.id=='undo')undo()
-    else if(t.id=='inp'){cfg.input=cfg.input=='clavier'?'cible':'clavier';save();game()}
-    else if(t.id=='menu')setup()
-  };
+  bindInput(throwDart,game,id=>{if(id=='next')confirmTurn();else if(id=='undo')undo();else if(id=='menu')home('match')});
 }
-
 function throwDart(v,m,x,y){
   if(S.wait||S.winner!=null)return;
   if(v==25&&S.bull50)v=50;
   if(v==0||v==25||v==50)m=1;
   hist.push(JSON.stringify(S));msg='';
-  const s=S.sides[S.cur],p=pst(),l=v==0?'0':v==50?'Bull':v==25?'25':(m==3?'T':m==2?'D':'')+v;
+  const s=S.sides[S.cur],p=pst(),l=lab(v,m);
   if(S.mode=='x01'){
     const val=v*m,isD=m==2||v==50;S.turn.push({val,x,y,l});
     const tot=S.turn.reduce((a,d)=>a+d.val,0),rest=s.score-tot;
@@ -337,7 +453,13 @@ function throwDart(v,m,x,y){
       p.best=Math.max(p.best,S.turn.reduce((a,d)=>a+d.val,0));S.winner=S.cur;S.turn=[]}
     else if(S.turn.length==3)S.wait='ok';
   }
+  if(S.winner!=null)recordMatch();
   save();game();
+}
+function recordMatch(){
+  if(S.order.every(n=>!S.ps[n].pid))return;const w=S.sides[S.winner].members;
+  S.gid=addGame('match',{mode:S.mode,start:S.start,ct:S.ct,dout:S.dout,teams:S.sides.some(s=>s.members.length>1),
+    players:S.order.map(n=>({...S.ps[n],name:n,won:w.includes(n)}))});
 }
 function confirmTurn(){
   hist.push(JSON.stringify(S));const s=S.sides[S.cur],p=pst(),tot=S.turn.reduce((a,d)=>a+d.val,0);
@@ -354,15 +476,15 @@ function reroll(){
   S.nums=[...k,...fresh].sort((a,b)=>b-a);S.nums.push(25);
   msg='Nouveaux numéros : '+fresh.sort((a,b)=>b-a).join(', ');
 }
-function undo(){if(hist.length){S=JSON.parse(hist.pop());msg='';mult=1;save();game()}}
+function undo(){if(!hist.length)return;const gid=S.gid;S=JSON.parse(hist.pop());if(gid&&S.gid!==gid)removeGame(gid);msg='';mult=1;save();game()}
 
-// ---------- Fin de partie ----------
+// ---------- Match : fin ----------
 function statsTable(){
-  const w=S.sides[S.winner].members,names=S.order,cr=S.mode!='x01';
+  const w=S.sides[S.winner].members,nm=S.order,cr=S.mode!='x01';
   const rows=cr?[['Marques par tour',p=>avg(p)],['Meilleur tour',p=>p.best+(p.best>1?' marques':' marque')],[S.ct?'Points infligés':'Points marqués',p=>p.pts],['Fléchettes',p=>p.darts]]
     :[['Moyenne (3 fl.)',p=>avg(p)],['Meilleure volée',p=>p.best],['100+',p=>p.t100],['140+',p=>p.t140],['180',p=>p.t180],['Plus gros finish',p=>p.co||'–'],['Fléchettes',p=>p.darts]];
-  return `<div class="tbl stats"><table><thead><tr><th></th>${names.map(n=>`<th class="${w.includes(n)?'cur':''}">${esc(n)}</th>`).join('')}</tr></thead>
-  <tbody>${rows.map(([l,f])=>`<tr><th>${l}</th>${names.map(n=>`<td class="${w.includes(n)?'w':''}">${f(S.ps[n])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  return `<div class="tbl stats"><table><thead><tr><th></th>${nm.map(n=>`<th class="${w.includes(n)?'cur':''}">${esc(n)}</th>`).join('')}</tr></thead>
+  <tbody>${rows.map(([l,f])=>`<tr><th>${l}</th>${nm.map(n=>`<td class="${w.includes(n)?'w':''}">${f(S.ps[n])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
 function winScreen(){
   const w=S.sides[S.winner],cr=S.mode!='x01';
@@ -370,16 +492,223 @@ function winScreen(){
   ${w.members.length>1?`<small>${w.members.map(esc).join(', ')}</small>`:''}</div>
   <h2>Statistiques des joueurs</h2>${statsTable()}
   ${cr?`<h2>Tableau final</h2>${crTable()}`:''}
-  <div class="btns"><button class="go" id="again">Rejouer</button><button class="sec" id="new">Nouvelle partie</button><button class="sec" id="undo">Annuler la dernière fléchette</button></div></div>`;
+  ${S.gid?'<div class="hint">Match enregistré dans les stats des joueurs.</div>':''}
+  <div class="btns"><button class="go" id="again">Rejouer</button><button class="sec" id="new">Nouveau match</button><button class="sec" id="undo">Annuler la dernière fléchette</button></div></div>`;
   app.onclick=e=>{const t=e.target.closest('button');if(!t)return;
-    if(t.id=='new')setup();else if(t.id=='again')startGame();else if(t.id=='undo')undo()};
+    if(t.id=='new')home('match');else if(t.id=='again')startGame();else if(t.id=='undo')undo()};
+}
+
+// ---------- Entraînement ----------
+const tg21=st=>st.i<20?st.i+1:25;
+const HALVE=[12,13,14,'D',15,16,17,'T',18,19,20,'B'];
+const DRILLS={
+  clock:{name:'Tour de l’horloge',desc:'Touche du 1 au 20 puis le bull, dans l’ordre, avec le moins de fléchettes possible.',better:'low',fmt:s=>s+' fléchettes',
+    init:()=>({i:0}),act:st=>[tg21(st)],
+    view:st=>({big:tg21(st)==25?'Bull':tg21(st),sub:`Cible ${st.i+1} sur 21`}),
+    dart(st,v){const t=tg21(st);if(t==25?v>=25:v==t){st.i++;return{ok:1}}},
+    over:st=>st.i>20,score:(st,T)=>T.darts},
+  bobs:{name:'Bob’s 27',desc:'27 points au départ. Vise D1 à D20 puis le bull : un double touché ajoute sa valeur, une volée sans double la retire.',better:'high',fmt:s=>s+' points',
+    init:()=>({i:0,sc:27,h:0}),act:st=>[tg21(st)],
+    view:st=>({big:tg21(st)==25?'Bull':'D'+tg21(st),sub:`Score ${st.sc} · double ${st.i+1} sur 21`}),
+    dart(st,v,m){const t=tg21(st);if(t==25?v==50:v==t&&m==2){st.sc+=t*2;st.h++;return{ok:1}}},
+    visit(st){const t=tg21(st);if(!st.h){st.sc-=t*2;st.msg='Aucun double : −'+t*2}st.h=0;st.i++},
+    over:st=>st.i>20||st.sc<=0,score:st=>st.sc},
+  c121:{name:'121 Checkout',desc:'9 fléchettes pour finir la cible sur un double. Réussi : cible +1. Raté : −1. 10 cibles.',better:'high',fmt:s=>s?'Meilleure cible '+s:'Aucune cible finie',
+    init:()=>({tg:121,rem:121,vs:121,ad:0,n:0,ok:0,best:0,nx:0}),act:()=>null,
+    view:st=>({big:st.rem,sub:`Cible ${st.tg} · fléchette ${Math.min(st.ad+1,9)} sur 9 · réussies ${st.ok}/${st.n}`}),
+    co:(st,T)=>checkout(st.rem,Math.min(3-T.turn.length,9-st.ad),true),
+    dart(st,v,m){const r=st.rem-v*m;st.ad++;
+      if(r<0||r==1||(r==0&&!(m==2||v==50))){st.rem=st.vs;st.ad=Math.ceil(st.ad/3)*3;if(st.ad>=9)st.nx=-1;return{end:1,msg:st.ad>=9?'Bust : cible ratée':'Bust'}}
+      st.rem=r;if(r==0){st.nx=1;st.ok++;st.best=Math.max(st.best,st.tg);return{ok:1,end:1,msg:'Cible '+st.tg+' réussie !'}}
+      if(st.ad>=9){st.nx=-1;return{end:1,msg:'9 fléchettes : cible ratée'}}},
+    visit(st){if(st.nx){st.n++;st.tg=Math.max(121,st.tg+st.nx);st.rem=st.tg;st.ad=0;st.nx=0}st.vs=st.rem},
+    over:st=>st.n>=10,score:st=>st.best},
+  halve:{name:'Halve-it',desc:'Une cible par volée en partant de 40 points. Les points touchés s’ajoutent, une volée ratée divise ton score par deux.',better:'high',fmt:s=>s+' points',
+    init:()=>({i:0,sc:40,h:0}),act:st=>{const t=HALVE[st.i];return typeof t=='number'?[t]:t=='B'?[25]:null},
+    view:st=>{const t=HALVE[st.i];return{big:t=='D'?'Double':t=='T'?'Triple':t=='B'?'Bull':t,sub:`Score ${st.sc} · manche ${st.i+1} sur 12`}},
+    dart(st,v,m){const t=HALVE[st.i];let p=0;
+      if(t=='D'){if(m==2||v==50)p=v*m}else if(t=='T'){if(m==3)p=v*3}else if(t=='B'){if(v>=25)p=v}else if(v==t)p=v*m;
+      if(p){st.sc+=p;st.h++;return{ok:1}}},
+    visit(st){if(!st.h){st.sc=Math.floor(st.sc/2);st.msg='Volée ratée : score divisé par deux'}st.h=0;st.i++},
+    over:st=>st.i>=12,score:st=>st.sc},
+  dbl:{name:'Tour des doubles',desc:'3 fléchettes sur chaque double, de D1 à D20 puis le bull. Compte tes doubles touchés.',better:'high',fmt:s=>`${s} sur 63 (${Math.round(s/63*100)} %)`,
+    init:()=>({i:0,hits:0}),act:st=>[tg21(st)],
+    view:st=>({big:tg21(st)==25?'Bull':'D'+tg21(st),sub:`${st.hits} touchés · double ${st.i+1} sur 21`}),
+    dart(st,v,m){const t=tg21(st);if(t==25?v==50:v==t&&m==2){st.hits++;return{ok:1}}},
+    visit(st){st.i++},over:st=>st.i>20,score:st=>st.hits},
+  t20:{name:'Scoring T20',desc:'10 volées en visant le triple 20. Marque le plus de points possible.',better:'high',fmt:s=>`${s} points (moy. ${fmt(s/10)})`,
+    init:()=>({i:0,sc:0}),act:()=>[20],
+    view:st=>({big:'T20',sub:`Volée ${st.i+1} sur 10 · ${st.sc} points${st.i?' · moy. '+fmt(st.sc/st.i):''}`}),
+    dart(st,v,m){st.sc+=v*m;if(v==20&&m==3)return{ok:1}},
+    visit(st){st.i++},over:st=>st.i>=10,score:st=>st.sc},
+};
+function bestDrill(name,id){const ids=idsOf(name),D=DRILLS[id];let b=null;
+  DB.games.forEach(g=>{if(g.kind=='drill'&&g.data.drill==id&&ids.has(g.data.pid)){const s=g.data.score;if(b==null||(D.better=='low'?s<b:s>b))b=s}});return b}
+function trainMenu(){
+  const pane=$('pane'),n=cfg.tp||'';
+  pane.innerHTML=`<h2>Joueur</h2>${datalist()}
+  <div class="prow"><input id="tp" list="pl-list" value="${esc(n)}" placeholder="Ton nom" aria-label="Nom du joueur"></div>
+  ${names().length?`<div class="chips">${names().slice(0,12).map(x=>`<button class="chip ${lc(x)==lc(n)?'on':''}" data-tp="${esc(x)}">${esc(x)}</button>`).join('')}</div>`:''}
+  <h2>Exercice</h2>
+  <div class="modes">${Object.entries(DRILLS).map(([id,D])=>{const b=n?bestDrill(n,id):null;
+    return `<button class="mode ${cfg.drill==id?'on':''}" data-drill="${id}"><b>${D.name}</b><small>${D.desc}</small>${b!=null?`<em>Record : ${D.fmt(b)}</em>`:''}</button>`}).join('')}</div>
+  <div class="msg">${err}</div>
+  <button class="go" id="tgo">Commencer</button>
+  ${T&&!T.done?`<button class="sec" id="tres">Reprendre : ${DRILLS[T.drill].name} (${esc(T.name)})</button>`:''}`;
+  pane.onclick=e=>{const t=e.target.closest('button');if(!t)return;const d=t.dataset;cfg.tp=$('tp').value.trim();err='';
+    if(d.tp){cfg.tp=d.tp}
+    else if(d.drill)cfg.drill=d.drill
+    else if(t.id=='tres'){msg='';hist.length=0;return tGame()}
+    else if(t.id=='tgo'){if(!cfg.tp){err='Écris ton nom pour garder tes records.';}else{save();return tStart(cfg.tp)}}
+    save();trainMenu()};
+}
+function tStart(n){const D=DRILLS[cfg.drill];T={drill:cfg.drill,name:n,pid:pidFor(n),st:D.init(),turn:[],wait:false,darts:0,done:false,gid:null};
+  hist.length=0;msg='';mult=1;save();tGame()}
+function tGame(){
+  screen='game';if(T.done)return tResult();
+  const D=DRILLS[T.drill],st=T.st,vw=D.view(st,T),co=!T.wait&&D.co?D.co(st,T):'',act=D.act(st);
+  BD={act,turn:T.turn};
+  app.innerHTML=`<div class="game">${inputHTML([...Array(20)].map((_,i)=>i+1),act)}<div class="side">
+  <div class="top"><div><div class="disp">${D.name}</div><div class="tags"><span class="tag">${esc(T.name)}</span><span class="tag">Entraînement</span></div></div><div class="round">${T.darts} fl.</div></div>
+  <div class="target"><div><small>Vise</small><b>${vw.big}</b><span>${vw.sub}</span></div></div>
+  <div class="turn"><span class="who">Volée</span>${[0,1,2].map(i=>{const d=T.turn[i];return `<div class="dart ${d?(d.ok?'ok':'f'):''}">${d?d.l:'·'}</div>`}).join('')}</div>
+  ${co?`<div class="co"><small>Finish conseillé</small><b>${co}</b></div>`:''}
+  <div class="msg">${msg}</div>
+  ${T.wait?'<button class="go" id="next">Volée suivante</button>':''}
+  <div class="ctl"><button id="miss">Raté</button><button id="undo">Annuler</button><button id="inp">${cfg.input=='clavier'?'Cible':'Clavier'}</button><button id="quit">Arrêter</button></div>
+  </div></div>`;
+  bindInput(tThrow,tGame,id=>{if(id=='next')tConfirm();else if(id=='undo')tUndo();else if(id=='quit'){T=null;save();home('train')}});
+}
+function tThrow(v,m,x,y){
+  if(!T||T.wait||T.done)return;if(v==0||v==25||v==50)m=1;
+  hist.push(JSON.stringify(T));msg='';const D=DRILLS[T.drill];
+  const r=D.dart(T.st,v,m)||{};T.darts++;T.turn.push({x,y,l:lab(v,m),ok:!!r.ok});if(r.msg)msg=r.msg;
+  if(D.over(T.st))tFinish();else if(r.end||T.turn.length==3)T.wait=true;
+  save();tGame();
+}
+function tConfirm(){
+  hist.push(JSON.stringify(T));const D=DRILLS[T.drill];if(D.visit)D.visit(T.st);
+  T.turn=[];T.wait=false;msg=T.st.msg||'';T.st.msg='';if(D.over(T.st))tFinish();save();tGame();
+}
+function tFinish(){const D=DRILLS[T.drill];T.done=true;T.wait=false;T.score=D.score(T.st,T);T.prev=bestDrill(T.name,T.drill);
+  T.gid=T.pid?addGame('drill',{drill:T.drill,pid:T.pid,name:T.name,score:T.score,darts:T.darts}):null}
+function tUndo(){if(!hist.length)return;const gid=T.gid;T=JSON.parse(hist.pop());if(gid&&T.gid!==gid)removeGame(gid);msg='';save();tGame()}
+function tResult(){
+  const D=DRILLS[T.drill],rec=T.pid&&(T.prev==null||(D.better=='low'?T.score<T.prev:T.score>T.prev));
+  app.innerHTML=`<div class="win"><div class="banner"><small>${D.name} · ${esc(T.name)}</small><div class="disp">${D.fmt(T.score)}</div>${rec?'<small>Nouveau record !</small>':''}</div>
+  ${T.pid?(T.prev!=null?`<div class="hint">Record précédent : ${D.fmt(T.prev)}</div>`:''):'<div class="hint">Joueur invité : ce résultat n’est pas enregistré.</div>'}
+  <div class="kpis"><div class="kpi"><b>${T.darts}</b><small>fléchettes lancées</small></div></div>
+  <div class="btns"><button class="go" id="again">Recommencer</button><button class="sec" id="back">Autre exercice</button><button class="sec" id="undo">Annuler la dernière fléchette</button></div></div>`;
+  app.onclick=e=>{const t=e.target.closest('button');if(!t)return;
+    if(t.id=='again'){cfg.drill=T.drill;tStart(T.name)}else if(t.id=='back'){T=null;save();home('train')}else if(t.id=='undo')tUndo()};
+}
+
+// ---------- Stats ----------
+const modeLabel=d=>d.mode=='x01'?String(d.start):(d.mode=='wild'?'Wildcard':'Cricket')+(d.ct?' cut throat':'');
+function statsFor(name){
+  const ids=idsOf(name),r={m:0,w:0,x:{n:0,d:0,t:0,best:0,ba:0,t100:0,t140:0,t180:0,co:0},c:{n:0,d:0,t:0,best:0},dr:{},recent:[],tr:0};
+  for(const g of DB.games){const d=g.data;
+    if(g.kind=='match'){const p=(d.players||[]).find(p=>ids.has(p.pid));if(!p)continue;r.m++;if(p.won)r.w++;
+      if(d.mode=='x01'){const x=r.x;x.n++;x.d+=p.darts;x.t+=p.total;x.best=Math.max(x.best,p.best);x.t100+=p.t100;x.t140+=p.t140;x.t180+=p.t180;x.co=Math.max(x.co,p.co||0);if(p.darts>=9)x.ba=Math.max(x.ba,p.total/p.darts*3)}
+      else{const c=r.c;c.n++;c.d+=p.darts;c.t+=p.total;c.best=Math.max(c.best,p.best)}
+      if(r.recent.length<15)r.recent.push({at:g.at,label:modeLabel(d)+(d.teams?' en équipe':''),res:p.won?'Victoire':'Défaite',cls:p.won?'w':'l'})}
+    else if(g.kind=='drill'&&ids.has(d.pid)){const D=DRILLS[d.drill];if(!D)continue;r.tr++;
+      const o=r.dr[d.drill]||(r.dr[d.drill]={n:0,best:null});o.n++;if(o.best==null||(D.better=='low'?d.score<o.best:d.score>o.best))o.best=d.score;
+      if(r.recent.length<15)r.recent.push({at:g.at,label:D.name,res:D.fmt(d.score),cls:'s'})}}
+  return r;
+}
+let statDel=false;
+function statsView(){
+  const pane=$('pane'),all=names();
+  if(!all.length){pane.innerHTML=`<p class="txt">Pas encore de stats. Joue un match ou un entraînement avec un vrai nom de joueur : ses stats apparaîtront ici.</p>
+    ${!user?'<p class="hint">Avec un compte, tes stats sont aussi sauvegardées en ligne. Va dans l’onglet Compte.</p>':''}`;return}
+  if(!all.some(n=>lc(n)==lc(cfg.statName)))cfg.statName=all[0];
+  const n=cfg.statName,r=statsFor(n),x=r.x,c=r.c,k=(v,l,h)=>`<div class="kpi ${h?'hl':''}"><b>${v}</b><small>${l}</small></div>`;
+  pane.innerHTML=`<div class="chips">${all.map(a=>`<button class="chip ${a==n?'on':''}" data-sn="${esc(a)}">${esc(a)}</button>`).join('')}</div>
+  <h2>Matchs</h2>
+  <div class="kpis">${k(r.m,'matchs joués')}${k(r.w,'victoires',1)}${k(r.m?Math.round(r.w/r.m*100)+' %':'–','de victoires')}</div>
+  ${x.n?`<h2>301 · 501 · 701</h2><div class="kpis">${k(x.d?fmt(x.t/x.d*3):'–','moyenne (3 fl.)',1)}${k(x.ba?fmt(x.ba):'–','meilleure moyenne d’un match')}${k(x.best,'meilleure volée')}${k(x.co||'–','plus gros finish')}${k(x.t180,'180')}${k(x.t140,'140+')}${k(x.t100,'100+')}</div>`:''}
+  ${c.n?`<h2>Cricket</h2><div class="kpis">${k(c.d?fmt(c.t/c.d*3):'–','marques par tour',1)}${k(c.best,'meilleur tour (marques)')}${k(c.n,'matchs de cricket')}</div>`:''}
+  ${r.tr?`<h2>Records d’entraînement</h2><div class="kpis">${Object.entries(r.dr).map(([id,o])=>k(DRILLS[id].fmt(o.best).replace(/ \(.*/,''),DRILLS[id].name+' · '+o.n+' fois')).join('')}</div>`:''}
+  ${r.recent.length?`<h2>Dernières parties</h2><div class="hist">${r.recent.map(h=>`<div class="hrow"><span><small>${dateFr(h.at)}</small>${h.label}</span><span class="${h.cls}">${h.res}</span></div>`).join('')}</div>`:''}
+  <h2>Gérer ce joueur</h2>
+  <div class="card"><label>Nom du joueur<input id="rn" value="${esc(n)}"></label><div class="msg">${err}</div>
+  <div class="row"><button class="sec" id="rename">Renommer</button><button class="danger ${statDel?'on':''}" id="pdel">${statDel?'Confirmer : supprimer '+esc(n):'Supprimer ce joueur'}</button></div>
+  ${statDel?'<div class="hint">Ses stats ne seront plus affichées. Touche à nouveau pour confirmer.</div>':''}</div>
+  ${user?`<p class="hint">${syncing?'Synchronisation en cours…':DB.last?'Synchronisé avec ton compte le '+new Date(DB.last).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})+'.':''}</p>`:''}`;
+  pane.onclick=e=>{const t=e.target.closest('button');if(!t)return;const d=t.dataset;err='';
+    if(d.sn){cfg.statName=d.sn;statDel=false}
+    else if(t.id=='rename'){const v=$('rn').value.trim();
+      if(!v||v.length>40)err='Le nom doit faire entre 1 et 40 caractères.';
+      else if(lc(v)!=lc(n)&&names().some(a=>lc(a)==lc(v)))err='Un joueur porte déjà ce nom.';
+      else{DB.profiles.forEach(p=>{if(lc(p.name)==lc(n)){p.name=v;p.sync=0}});cfg.statName=v;
+        cfg.players.forEach(p=>{if(lc(p.n)==lc(n))p.n=v});if(lc(cfg.tp)==lc(n))cfg.tp=v;saveDB();sync()}}
+    else if(t.id=='pdel'){if(!statDel)statDel=true;else{DB.profiles.forEach(p=>{if(lc(p.name)==lc(n)){p.archived=true;p.sync=0}});statDel=false;cfg.statName='';saveDB();sync()}}
+    save();statsView()};
+}
+
+// ---------- Compte ----------
+function accountView(){
+  const pane=$('pane');
+  if(!sb){pane.innerHTML=`<div class="card"><p class="txt">Les comptes ne sont pas disponibles ici. Ouvre l’appli sur <b>scoreflechettes.netlify.app</b> avec une connexion internet pour créer ton compte.</p><p class="hint">Tu peux jouer et garder tes stats sur cet appareil sans compte.</p></div>`;return}
+  if(user){const ps=(user.user_metadata&&user.user_metadata.pseudo)||user.email;
+    pane.innerHTML=`<div class="card"><div class="disp" style="font-size:2.4rem">${esc(ps)}</div><div class="hint">${esc(user.email)}</div>
+    <p class="txt">Tes joueurs, tes matchs et tes entraînements sont sauvegardés dans ton compte et se retrouvent sur tous tes appareils.</p>
+    <div class="${syncMsg?'msg':'hint'}">${syncing?'Synchronisation en cours…':syncMsg||(DB.last?'Dernière synchronisation : '+new Date(DB.last).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'')}</div>
+    <div class="row"><button class="sec" id="sync" ${syncing?'disabled':''}>Synchroniser maintenant</button><button class="sec" id="out">Se déconnecter</button></div>
+    <div class="msg">${acc.msg}</div>
+    <button class="danger ${acc.del?'on':''}" id="kill">${acc.del?'Confirmer : supprimer mon compte et mes données':'Supprimer mon compte'}</button>
+    ${acc.del?'<div class="hint">Ton compte et toutes tes données en ligne seront effacés définitivement. Touche à nouveau pour confirmer.</div>':''}
+    <button class="ghost" data-go="privacy">Confidentialité</button></div>`;
+    pane.onclick=async e=>{const t=e.target.closest('button');if(!t)return;acc.msg='';
+      if(t.dataset.go)return home('privacy');
+      if(t.id=='sync')sync();
+      else if(t.id=='out'){await sync();await sb.auth.signOut().catch(()=>{});clearAccountData()}
+      else if(t.id=='kill'){if(!acc.del){acc.del=true}else{acc.del=false;const{error}=await sb.rpc('delete_my_account');
+        if(error)acc.msg='Suppression impossible pour le moment. Réessaie plus tard.';else{await sb.auth.signOut().catch(()=>{});clearAccountData(true)}}}
+      refresh()};
+    return}
+  const up=acc.mode=='up';
+  pane.innerHTML=`<div class="card">
+  <div class="chips"><button class="chip ${up?'':'on'}" data-am="in">Se connecter</button><button class="chip ${up?'on':''}" data-am="up">Créer un compte</button></div>
+  <p class="txt">${up?'Crée ton compte pour retrouver tes joueurs et tes stats sur tous tes appareils. Les parties déjà jouées sur cet appareil y seront ajoutées.':'Connecte-toi pour retrouver tes stats.'}</p>
+  <form id="af" class="card" style="padding:0;background:none">
+  ${up?'<label>Pseudo<input id="ap" autocomplete="nickname" maxlength="30" required></label>':''}
+  <label>E-mail<input id="ae" type="email" autocomplete="email" required></label>
+  <label>Mot de passe<input id="aw" type="password" autocomplete="${up?'new-password':'current-password'}" minlength="6" required></label>
+  ${up?'<div class="hint">Au moins 6 caractères.</div>':''}
+  <div class="msg">${acc.msg}</div>${acc.ok?`<div class="good">${acc.ok}</div>`:''}
+  <button class="go" type="submit" ${acc.busy?'disabled':''}>${acc.busy?'Patiente…':up?'Créer mon compte':'Se connecter'}</button>
+  </form>
+  ${up?'<div class="hint">En créant un compte, tu acceptes la <a href="#" data-go="privacy">politique de confidentialité</a>.</div>':'<button class="ghost" data-go="privacy">Confidentialité</button>'}</div>`;
+  pane.onclick=e=>{const t=e.target.closest('[data-am],[data-go]');if(!t)return;e.preventDefault();
+    if(t.dataset.go)return home('privacy');acc.mode=t.dataset.am;acc.msg='';acc.ok='';accountView()};
+  $('af').onsubmit=async e=>{e.preventDefault();const em=$('ae').value.trim(),pw=$('aw').value,ps=up?$('ap').value.trim():'';
+    if(up&&!ps){acc.msg='Choisis un pseudo.';return accountView()}
+    acc.busy=true;acc.msg='';acc.ok='';accountView();
+    try{if(up){const{data,error}=await sb.auth.signUp({email:em,password:pw,options:{data:{pseudo:ps}}});if(error)throw error;
+        if(!data.session){acc.ok='Compte créé. Ouvre le lien reçu par e-mail pour le confirmer, puis connecte-toi.';acc.mode='in'}}
+      else{const{error}=await sb.auth.signInWithPassword({email:em,password:pw});if(error)throw error}}
+    catch(er){acc.msg=authErr(er)}
+    acc.busy=false;refresh()};
+}
+function clearAccountData(all){DB={profiles:all?[]:DB.profiles.filter(p=>!p.sync),games:all?[]:DB.games.filter(g=>!g.sync)};saveDB();acc.del=false}
+function privacyView(){
+  $('pane').innerHTML=`<div class="card" style="max-width:720px"><div class="disp" style="font-size:2.2rem">Confidentialité</div>
+  <p class="txt">Score Fléchettes fonctionne sans compte : tes joueurs et tes stats restent alors uniquement sur ton appareil.</p>
+  <p class="txt"><b>Si tu crées un compte</b>, on enregistre ton adresse e-mail, ton pseudo, ton mot de passe (chiffré, illisible même pour l’éditeur), les noms des joueurs que tu crées et les résultats de tes matchs et entraînements.</p>
+  <p class="txt"><b>Pourquoi :</b> uniquement pour te connecter et retrouver tes stats sur tous tes appareils. Pas de publicité, pas de revente, aucun partage avec des tiers.</p>
+  <p class="txt"><b>Où :</b> chez notre hébergeur Supabase, sur des serveurs situés dans l’Union européenne (Irlande).</p>
+  <p class="txt"><b>Combien de temps :</b> tant que ton compte existe. Le bouton « Supprimer mon compte » efface immédiatement ton compte et toutes tes données en ligne.</p>
+  <p class="txt"><b>Tes droits (RGPD) :</b> tu peux consulter, corriger ou supprimer tes données à tout moment depuis l’appli. Pour toute autre demande, contacte l’éditeur de Score Fléchettes.</p>
+  <button class="sec" data-view="compte">Retour</button></div>`;
 }
 
 // Empêche le zoom par double-tap (Safari) : deux appuis rapides = deux clics
 let lastT=0;document.addEventListener('touchend',e=>{const n=Date.now(),b=e.target.closest('button,canvas');
   if(b&&n-lastT<350){e.preventDefault();if(b.tagName=='BUTTON')b.click()}lastT=n},{passive:false});
 try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}
-setup();
+home();
 </script>
 
 <script>if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{})</script>
