@@ -125,6 +125,8 @@ a{color:var(--hl)}
 .k.bull{background:#1f6b45;border-color:#1f6b45}.k.bull2{background:#9e2730;border-color:#9e2730}
 .k.aim{border-color:var(--hl);color:var(--hl)}
 .pad.tot{grid-template-columns:repeat(3,1fr)!important}
+.pad.crp{grid-template-columns:repeat(3,1fr)!important}
+.pad.crp .bull2{grid-column:1/-1}
 .tot-d{grid-column:1/-1;font-family:var(--disp);font-size:4rem;font-weight:900;text-align:right;background:var(--band2);padding:4px 16px;border-radius:4px;color:var(--hl);font-variant-numeric:tabular-nums}
 .tot-q{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin:0}
 
@@ -704,11 +706,12 @@ addEventListener('resize',redraw);try{document.fonts.ready.then(redraw)}catch(e)
 let inpModes=['cible','clavier'],tot='',finAsk=null;
 const INP_L={cible:'Cible',clavier:'Clavier',total:'Total'};
 const inpNext=()=>{const c=inpModes.includes(cfg.input)?cfg.input:'clavier';return INP_L[inpModes[(inpModes.indexOf(c)+1)%inpModes.length]]};
-function inputHTML(nums,act){const md=inpModes.includes(cfg.input)?cfg.input:'clavier';
+function inputHTML(nums,act,cr){const md=inpModes.includes(cfg.input)?cfg.input:'clavier';
   if(md=='total'){
     if(finAsk!=null)return `<div class="pad tot"><div class="tot-d">${finAsk}</div><p class="hint tot-q">Fini en combien de fléchettes ?</p><button class="k" data-fin="1">1</button><button class="k" data-fin="2">2</button><button class="k" data-fin="3">3</button><button class="k ctl tot-q" data-fin="0">Retour</button></div>`;
     return `<div class="pad tot"><div class="tot-d">${tot||'0'}</div>${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="k" data-tk="${n}">${n}</button>`).join('')}<button class="k ctl" data-tk="del" aria-label="Effacer">⌫</button><button class="k" data-tk="0">0</button><button class="k bull" data-tk="ok">OK</button>
     <div class="tot-q">${[26,41,45,60,81,85,100,140,180].map(q=>`<button class="chip" data-tq="${q}">${q}</button>`).join('')}</div></div>`}
+  if(md=='clavier'&&cr)return `<div class="pad crp"><button class="k mod ${mult==2?'on':''}" data-m="2">Double</button><button class="k mod ${mult==3?'on':''}" data-m="3">Triple</button><button class="k bull" data-k="25">25</button>${nums.map(n=>`<button class="k" data-k="${n}">${n}</button>`).join('')}<button class="k bull2" data-k="50">Bull</button></div>`;
   return md=='clavier'
     ?`<div class="pad"><button class="k mod ${mult==2?'on':''}" data-m="2">Double</button><button class="k mod ${mult==3?'on':''}" data-m="3">Triple</button>${nums.map(n=>`<button class="k ${act&&act.length<3&&act.includes(n)?'aim':''}" data-k="${n}">${n}</button>`).join('')}<button class="k bull" data-k="25">25</button><button class="k bull2" data-k="50">Bull</button></div>`
     :'<div class="bwrap"><canvas class="board" id="bd" aria-label="Cible : touche l’endroit où la fléchette est plantée. Reste appuyé pour zoomer"></canvas><canvas class="loupe" id="lp" hidden></canvas><div class="lp-l" id="lpl" hidden></div></div>';
@@ -788,7 +791,7 @@ function game(){
   const nums=cr?S.nums.filter(n=>n<25):[...Array(20)].map((_,i)=>i+1);
   BD={act:cr?S.nums:null,turn:S.turn};
   const vol=S.wait=='bust'?'Bust':cr?sum+(sum>1?' marques':' marque'):sum;
-  app.innerHTML=`<div class="game">${RO?'<canvas class="board" id="bd"></canvas>':inputHTML(nums,null)}<div class="side">
+  app.innerHTML=`<div class="game">${RO?'<canvas class="board" id="bd"></canvas>':inputHTML(nums,null,cr)}<div class="side">
   <div class="top"><div><div class="disp">${title}</div>${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag ${t[0]=='<'?'hl':''}">${t}</span>`).join('')}</div>`:''}</div><div class="round">Tour ${S.round}</div></div>
   ${cr?crTable():scoreBars(rem)}
   <div class="turn"><span class="who">${esc(who)}${s.members.length>1?` <small>${esc(s.name)}</small>`:''}</span>${[0,1,2].map(i=>`<div class="dart ${S.turn[i]?'f':''}">${S.turn[i]?S.turn[i].l:'·'}</div>`).join('')}</div>
